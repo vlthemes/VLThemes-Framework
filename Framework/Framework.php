@@ -1,16 +1,5 @@
 <?php
 
-/**
- * VLT Framework Core
- *
- * Debug Logging Configuration:
- * Error logging can be controlled by defining DEV_MODE constant in wp-config.php:
- * define('DEV_MODE', true);  // Enable debug logging
- * define('DEV_MODE', false); // Disable debug logging
- *
- * If DEV_MODE is not defined, logging falls back to WP_DEBUG setting.
- */
-
 namespace VLT\Framework;
 
 if (!defined('ABSPATH')) {
@@ -20,45 +9,15 @@ if (!defined('ABSPATH')) {
 final class Framework
 {
 
-	/**
-	 * Framework version
-	 *
-	 * @var string
-	 */
 	const VERSION = '1.0.0';
 
-	/**
-	 * Single instance
-	 *
-	 * @var Framework|null
-	 */
 	private static $instance = null;
-
-	/**
-	 * Configuration array
-	 *
-	 * @var array
-	 */
 	private $config = [];
-
-	/**
-	 * Loaded modules
-	 *
-	 * @var array
-	 */
 	private $modules = [];
-
-	/**
-	 * Module registry
-	 *
-	 * @var array
-	 */
 	private $module_registry = [];
 
 	/**
 	 * Get singleton instance
-	 *
-	 * @return Framework
 	 */
 	public static function instance()
 	{
@@ -69,7 +28,7 @@ final class Framework
 	}
 
 	/**
-	 * Constructor - Private to prevent direct instantiation
+	 * Constructor
 	 */
 	private function __construct()
 	{
@@ -79,23 +38,15 @@ final class Framework
 		$this->init_hooks();
 	}
 
-	/**
-	 * Prevent cloning
-	 */
 	private function __clone() {}
 
-	/**
-	 * Prevent unserializing
-	 */
 	public function __wakeup()
 	{
 		throw new \Exception('Cannot unserialize singleton');
 	}
 
 	/**
-	 * Initialize autoloader for framework classes
-	 *
-	 * PSR-4 compatible autoloader
+	 * Initialize autoloader
 	 */
 	private function init_autoloader()
 	{
@@ -103,30 +54,14 @@ final class Framework
 			$prefix = 'VLT\\Framework\\';
 			$base_dir = VLT_FRAMEWORK_PATH;
 
-			// Check if class uses the namespace prefix
 			$len = strlen($prefix);
 			if (strncmp($prefix, $class, $len) !== 0) {
 				return;
 			}
 
-			// Get the relative class name
 			$relative_class = substr($class, $len);
-
-			// Replace namespace separator with directory separator
 			$file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
 
-			// Debug: Log autoloader attempts for Utils modules
-			$dev_mode = defined('WP_DEBUG') && WP_DEBUG;
-			if (strpos($relative_class, 'Modules\\Utils\\') === 0 && $dev_mode) {
-				error_log(sprintf(
-					'[VLT Autoloader] Class: %s, File: %s, Exists: %s',
-					$class,
-					$file,
-					file_exists($file) ? 'YES' : 'NO'
-				));
-			}
-
-			// If file exists, require it
 			if (file_exists($file)) {
 				require_once $file;
 			}
@@ -135,8 +70,6 @@ final class Framework
 
 	/**
 	 * Load framework configuration
-	 *
-	 * Loads default config from config.php and allows themes to override
 	 */
 	private function load_config()
 	{
@@ -146,21 +79,15 @@ final class Framework
 			$this->config = require $config_file;
 		}
 
-		// Allow themes to override/extend config
 		$this->config = apply_filters('vlt_framework_config', $this->config);
 	}
 
 	/**
 	 * Register all available modules
-	 *
-	 * Defines which modules are available and their loading conditions
 	 */
 	private function register_modules()
 	{
 		$this->module_registry = [
-			// ========================================
-			// PRIORITY 1: KIRKI & SANITIZE
-			// ========================================
 			'sanitize' => [
 				'class' => 'Modules\\Utils\\Sanitize',
 				'required' => true,
@@ -175,10 +102,6 @@ final class Framework
 				'priority' => 1,
 			],
 
-			// ========================================
-			// PRIORITY 5: UTILS (Helpers)
-			// ========================================
-
 			'helpers' => [
 				'class' => 'Modules\\Utils\\Helpers',
 				'required' => true,
@@ -186,9 +109,6 @@ final class Framework
 				'priority' => 5,
 			],
 
-			// ========================================
-			// PRIORITY 10: CORE MODULES
-			// ========================================
 			'setup' => [
 				'class' => 'Modules\\Core\\Setup',
 				'required' => true,
@@ -238,9 +158,6 @@ final class Framework
 				'priority' => 10,
 			],
 
-			// ========================================
-			// PRIORITY 20: FEATURE MODULES
-			// ========================================
 			'icons' => [
 				'class' => 'Modules\\Features\\Icons',
 				'required' => false,
@@ -249,10 +166,8 @@ final class Framework
 			],
 		];
 
-		// Allow themes/plugins to register custom modules
 		$this->module_registry = apply_filters('vlt_framework_register_modules', $this->module_registry);
 
-		// Sort by priority
 		uasort($this->module_registry, function ($a, $b) {
 			$priority_a = $a['priority'] ?? 20;
 			$priority_b = $b['priority'] ?? 20;
@@ -272,57 +187,35 @@ final class Framework
 
 	/**
 	 * Load and instantiate modules
-	 *
-	 * Runs on 'after_setup_theme' hook with priority 5
 	 */
 	public function load_modules()
 	{
 		foreach ($this->module_registry as $key => $module_data) {
-			// Skip if disabled
 			if (!$module_data['enabled']) {
 				continue;
 			}
 
-			// Check condition if exists
 			if (isset($module_data['condition']) && !$this->check_condition($module_data['condition'])) {
 				continue;
 			}
 
-			// Load module
 			$class = 'VLT\\Framework\\' . $module_data['class'];
 
-			// Debug: Log module loading attempts
-			$dev_mode = defined('WP_DEBUG') && WP_DEBUG;
-			if (in_array($key, ['sanitize', 'helpers']) && $dev_mode) {
-				error_log(sprintf(
-					'[VLT Load Module] Key: %s, Class: %s, Exists before check: %s',
-					$key,
-					$class,
-					class_exists($class, false) ? 'YES' : 'NO'
-				));
-			}
-
 			if (!class_exists($class)) {
-				if ($module_data['required']) {
-					$dev_mode = defined('WP_DEBUG') && WP_DEBUG;
-					if ($dev_mode) {
-						error_log(sprintf('VLT Framework: Required module class "%s" not found', $class));
-					}
+				if ($module_data['required'] && defined('WP_DEBUG') && WP_DEBUG) {
+					error_log(sprintf('VLT Framework: Required module class "%s" not found', $class));
 				}
 				continue;
 			}
 
 			try {
-				// Instantiate module
 				$this->modules[$key] = new $class($this);
 
-				// Call register method if exists
 				if (method_exists($this->modules[$key], 'register')) {
 					$this->modules[$key]->register();
 				}
 			} catch (\Exception $e) {
-				$dev_mode = defined('WP_DEBUG') && WP_DEBUG;
-				if ($dev_mode) {
+				if (defined('WP_DEBUG') && WP_DEBUG) {
 					error_log(sprintf('VLT Framework: Error loading module "%s": %s', $key, $e->getMessage()));
 				}
 
@@ -332,62 +225,48 @@ final class Framework
 			}
 		}
 
-		// Notify that modules are loaded
 		do_action('vlt_framework_modules_loaded', $this->modules);
 	}
 
 	/**
 	 * Check if condition is met for conditional modules
-	 *
-	 * @param string $condition Condition to check
-	 * @return bool
 	 */
 	private function check_condition($condition)
 	{
-		// Check for class existence
 		if (strpos($condition, 'class_exists:') === 0) {
 			$class = str_replace('class_exists:', '', $condition);
 			return class_exists($class);
 		}
 
-		// Check for function existence
 		if (strpos($condition, 'function_exists:') === 0) {
 			$function = str_replace('function_exists:', '', $condition);
 			return function_exists($function);
 		}
 
-		// Check for action fired
 		if (strpos($condition, 'did_action:') === 0) {
 			$action = str_replace('did_action:', '', $condition);
 			return did_action($action);
 		}
 
-		// Default: check if action was fired
 		return did_action($condition);
 	}
 
 	/**
 	 * Initialize framework
-	 *
-	 * Runs on 'init' hook with priority 0
 	 */
 	public function init()
 	{
-		// Initialize loaded modules
 		foreach ($this->modules as $module) {
 			if (method_exists($module, 'init')) {
 				$module->init();
 			}
 		}
 
-		// Notify that framework is initialized
 		do_action('vlt_framework_init');
 	}
 
 	/**
 	 * WordPress fully loaded
-	 *
-	 * Runs on 'wp_loaded' hook
 	 */
 	public function wp_loaded()
 	{
@@ -396,9 +275,6 @@ final class Framework
 
 	/**
 	 * Get specific module instance
-	 *
-	 * @param string $name Module name
-	 * @return object|null Module instance or null if not found
 	 */
 	public function get_module($name)
 	{
@@ -407,8 +283,6 @@ final class Framework
 
 	/**
 	 * Get all loaded modules
-	 *
-	 * @return array Array of module instances
 	 */
 	public function get_modules()
 	{
@@ -417,9 +291,6 @@ final class Framework
 
 	/**
 	 * Check if module is loaded
-	 *
-	 * @param string $name Module name
-	 * @return bool
 	 */
 	public function has_module($name)
 	{
@@ -427,13 +298,7 @@ final class Framework
 	}
 
 	/**
-	 * Get configuration value
-	 *
-	 * Supports dot notation: 'modules.portfolio'
-	 *
-	 * @param string $key Config key (dot notation supported)
-	 * @param mixed $default Default value if key not found
-	 * @return mixed Config value or default
+	 * Get configuration value (supports dot notation)
 	 */
 	public function get_config($key, $default = null)
 	{
@@ -451,10 +316,7 @@ final class Framework
 	}
 
 	/**
-	 * Set configuration value
-	 *
-	 * @param string $key Config key (dot notation supported)
-	 * @param mixed $value Value to set
+	 * Set configuration value (supports dot notation)
 	 */
 	public function set_config($key, $value)
 	{
@@ -475,8 +337,6 @@ final class Framework
 
 	/**
 	 * Get all configuration
-	 *
-	 * @return array
 	 */
 	public function get_all_config()
 	{
@@ -485,8 +345,6 @@ final class Framework
 
 	/**
 	 * Get framework version
-	 *
-	 * @return string
 	 */
 	public function get_version()
 	{
@@ -494,9 +352,7 @@ final class Framework
 	}
 
 	/**
-	 * Debug: Get loaded modules list
-	 *
-	 * @return array
+	 * Get loaded modules list for debugging
 	 */
 	public function debug_modules()
 	{

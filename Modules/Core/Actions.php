@@ -11,18 +11,7 @@ if (! defined('ABSPATH')) {
 class Actions extends BaseModule
 {
 
-	/**
-	 * Module name
-	 *
-	 * @var string
-	 */
 	protected $name = 'actions';
-
-	/**
-	 * Module version
-	 *
-	 * @var string
-	 */
 	protected $version = '1.0.0';
 
 	/**
@@ -30,11 +19,9 @@ class Actions extends BaseModule
 	 */
 	public function register()
 	{
-
 		add_action('wp_body_open', [$this, 'wp_body_open']);
 		add_action('wp_body_open', [$this, 'skip_link']);
 
-		// Allow themes to add custom actions
 		do_action('vlt_framework_actions_init');
 	}
 
@@ -45,6 +32,7 @@ class Actions extends BaseModule
 
 	public function skip_link()
 	{
-		echo '<a class="skip-link screen-reader-text" href="#content">' . esc_html__('Skip to content', '@@textdomain') . '</a>';
+		$text_domain = $this->get_config('text_domain', 'vlt-framework');
+		echo '<a class="skip-link screen-reader-text" href="#content">' . esc_html__('Skip to content', $text_domain) . '</a>';
 	}
 }

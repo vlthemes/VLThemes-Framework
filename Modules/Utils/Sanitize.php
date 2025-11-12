@@ -10,25 +10,11 @@ if (!defined('ABSPATH')) {
 
 /**
  * Sanitize Module
- *
- * Provides sanitization methods for various data types
- * Wrappers for WordPress sanitization functions with additional utilities
  */
 class Sanitize extends BaseModule
 {
 
-	/**
-	 * Module name
-	 *
-	 * @var string
-	 */
 	protected $name = 'sanitize';
-
-	/**
-	 * Module version
-	 *
-	 * @var string
-	 */
 	protected $version = '1.0.0';
 
 	/**
@@ -36,17 +22,10 @@ class Sanitize extends BaseModule
 	 */
 	public function register()
 	{
-		// No functions to register - using global functions.php
 	}
 
 	/**
 	 * Sanitize CSS class
-	 *
-	 * Supports strings, arrays, and fallback values
-	 *
-	 * @param string|array $class    CSS class or classes (space-separated or array).
-	 * @param string|null  $fallback Fallback class if $class is empty.
-	 * @return string Sanitized class names.
 	 */
 	public static function sanitize_class($class, $fallback = null)
 	{
@@ -54,29 +33,21 @@ class Sanitize extends BaseModule
 			return !empty($fallback) ? sanitize_html_class($fallback) : '';
 		}
 
-		// Convert string to array
 		if (is_string($class)) {
 			$class = explode(' ', trim($class));
 		}
 
-		// Sanitize array of classes
 		if (is_array($class) && !empty($class)) {
 			$class = array_map('sanitize_html_class', $class);
-			$class = array_filter($class); // Remove empty values
+			$class = array_filter($class);
 			return implode(' ', $class);
 		}
 
-		// Fallback for single value
 		return !empty($class) ? sanitize_html_class($class, $fallback) : '';
 	}
 
 	/**
 	 * Sanitize inline style
-	 *
-	 * Sanitizes inline CSS styles, allowing only safe properties
-	 *
-	 * @param string $style Style string to sanitize.
-	 * @return string Sanitized style.
 	 */
 	public static function style($style)
 	{
@@ -130,11 +101,6 @@ class Sanitize extends BaseModule
 
 	/**
 	 * Convert string to boolean
-	 *
-	 * Converts various string representations to boolean values
-	 *
-	 * @param mixed $value Value to convert.
-	 * @return bool Boolean value.
 	 */
 	public static function string_to_bool($value)
 	{

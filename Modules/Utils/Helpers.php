@@ -10,25 +10,11 @@ if (!defined('ABSPATH')) {
 
 /**
  * Helpers Module
- *
- * Provides various helper functions and utilities
- * Handles MIME types, content trimming, and other common tasks
  */
 class Helpers extends BaseModule
 {
 
-	/**
-	 * Module name
-	 *
-	 * @var string
-	 */
 	protected $name = 'helpers';
-
-	/**
-	 * Module version
-	 *
-	 * @var string
-	 */
 	protected $version = '1.0.0';
 
 	/**
@@ -36,30 +22,19 @@ class Helpers extends BaseModule
 	 */
 	public function register()
 	{
-		// No functions to register - using global functions.php
 	}
 
 	/**
 	 * Get trimmed content
-	 *
-	 * Removes shortcodes, strips tags, and limits content to specified word count
-	 * Can accept either content string or post ID (uses excerpt if available)
-	 *
-	 * @param string|int|null $content_or_post_id Content string or Post ID.
-	 * @param int             $max_words          Maximum number of words.
-	 * @return string Trimmed content.
 	 */
 	public static function get_trimmed_content($content_or_post_id = null, $max_words = 18)
 	{
-
-		// Validate max_words
 		if (! is_numeric($max_words) || $max_words < 1) {
 			$max_words = 18;
 		}
 
 		$content = '';
 
-		// If numeric, treat as post ID
 		if (is_numeric($content_or_post_id) || is_null($content_or_post_id)) {
 			$postID = $content_or_post_id ?: get_the_ID();
 			$post    = get_post($postID);
@@ -68,10 +43,8 @@ class Helpers extends BaseModule
 				return '';
 			}
 
-			// Use excerpt if available, otherwise use content
 			$content = ! empty($post->post_excerpt) ? $post->post_excerpt : $post->post_content;
 		} else {
-			// Treat as content string
 			$content = $content_or_post_id;
 		}
 
@@ -105,15 +78,6 @@ class Helpers extends BaseModule
 
 	/**
 	 * Get attachment image
-	 *
-	 * Returns formatted image HTML with lazy loading and custom size support
-	 *
-	 * @param int    $image_id       Image attachment ID.
-	 * @param string $image_size_key Image size key (or 'custom').
-	 * @param string $class          Additional CSS classes.
-	 * @param string $image_key      Image key for custom dimensions (optional).
-	 * @param array  $settings       Settings array with custom dimensions (optional).
-	 * @return string|false Image HTML or false if no image.
 	 */
 	public static function get_attachment_image($image_id, $image_size_key = 'full', $class = '', $image_key = '', $settings = [])
 	{
@@ -152,16 +116,7 @@ class Helpers extends BaseModule
 	}
 
 	/**
-	 * Get attachment image
-	 *
-	 * Returns formatted image HTML with lazy loading and custom size support
-	 *
-	 * @param int    $image_id       Image attachment ID.
-	 * @param string $image_size_key Image size key (or 'custom').
-	 * @param string $class          Additional CSS classes.
-	 * @param string $image_key      Image key for custom dimensions (optional).
-	 * @param array  $settings       Settings array with custom dimensions (optional).
-	 * @return string|false Image HTML or false if no image.
+	 * Get attachment image source URL
 	 */
 	public static function get_attachment_image_src($image_id, $image_size_key = 'full', string $image_key = '', array $settings = [])
 	{
@@ -171,7 +126,6 @@ class Helpers extends BaseModule
 
 		$size = $image_size_key;
 
-		// Parse custom dimensions from settings
 		if ('custom' === $image_size_key && !empty($image_key)) {
 			$custom_key = $image_key . '_custom_dimension';
 			$dim = $settings[$custom_key] ?? [];
@@ -201,16 +155,6 @@ class Helpers extends BaseModule
 
 	/**
 	 * Get post taxonomy terms
-	 *
-	 * Returns formatted list of taxonomy terms for a post
-	 * Can return linked or plain text list
-	 *
-	 * @param int    $postID   Post ID.
-	 * @param string $taxonomy  Taxonomy name (e.g. 'category', 'post_tag').
-	 * @param string $delimiter Separator between terms.
-	 * @param string $get       Term field to display ('name', 'slug', etc.).
-	 * @param bool   $link      Whether to create links to term archives.
-	 * @return string Formatted taxonomy terms list.
 	 */
 	public static function get_post_taxonomy($postID, $taxonomy, $delimiter = ', ', $get = 'name', $link = true)
 	{
@@ -240,12 +184,6 @@ class Helpers extends BaseModule
 
 	/**
 	 * Parse video ID from URL
-	 *
-	 * Detects YouTube or Vimeo video URLs and extracts the video ID.
-	 * Returns array with vendor and ID, or ['custom', $url] for unsupported formats.
-	 *
-	 * @param string $url Video URL.
-	 * @return array ['vendor' => 'youtube|vimeo|custom', 'id' => string]
 	 */
 	public static function parse_video_id($url)
 	{
@@ -279,7 +217,6 @@ class Helpers extends BaseModule
 			}
 		}
 
-		// Fallback: custom video URL
 		return apply_filters('vlt_framework_video_id', ['custom', esc_url_raw($url)], $url);
 	}
 }

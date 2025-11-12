@@ -10,31 +10,13 @@ if (!defined('ABSPATH')) {
 
 /**
  * Kirki Customizer Integration Module
- *
- * Provides wrapper methods for Kirki customizer framework
- * Handles panels, sections, fields registration and dynamic CSS output
  */
 class Kirki extends BaseModule
 {
 
-	/**
-	 * Module name
-	 */
 	protected $name = 'kirki';
-
-	/**
-	 * Module version
-	 */
 	protected $version = '1.0.0';
-
-	/**
-	 * Kirki config ID
-	 */
 	private $config_id;
-
-	/**
-	 * Stored default values from fields
-	 */
 	private static $default_options = [];
 
 	/**
@@ -42,29 +24,19 @@ class Kirki extends BaseModule
 	 */
 	public function register()
 	{
-		// Load editor styles always
 		add_action('admin_enqueue_scripts', [$this, 'load_customizer_editor_styles']);
 
-		// Check if Kirki is available
 		if (!class_exists('Kirki')) {
-			// Load frontend styles only if Kirki is not installed
 			add_action('wp_enqueue_scripts', [$this, 'load_customizer_frontend_styles']);
 		}
 
-		// Get config from framework
 		$config = $this->get_config('customizer', []);
 		$this->config_id = $config['config_id'] ?? 'vlt_customize';
 
-		// Initialize Kirki configuration
 		$this->init_kirki_config();
 
-		// Load theme customizer configuration
 		add_action('init', [$this, 'load_theme_customizer'], 10);
-
-		// Register customizer elements
 		add_action('init', [$this, 'register_customizer_elements'], 20);
-
-		// Load dynamic CSS configuration after Kirki is ready
 		add_action('init', [$this, 'load_dynamic_css_config'], 30);
 
 		if (!empty($this->config_id)) {
@@ -72,13 +44,11 @@ class Kirki extends BaseModule
 		}
 	}
 
-
 	/**
 	 * Initialize module
 	 */
 	public function init()
 	{
-		// Nothing to do here - functions already registered in register()
 	}
 
 
@@ -103,8 +73,8 @@ class Kirki extends BaseModule
 	public function load_customizer_editor_styles()
 	{
 		$css_file = apply_filters('vlt_framework_kirki_editor_css', 'inc/kirki/css/customizer-editor.css');
-		$css_path = LEEDO_THEME_DIR . $css_file;
-		$css_url = LEEDO_THEME_URI . $css_file;
+		$css_path = trailingslashit(get_template_directory()) . $css_file;
+		$css_url = trailingslashit(get_template_directory_uri()) . $css_file;
 
 		if (file_exists($css_path)) {
 			wp_enqueue_style('vlt-customizer-editor', $css_url, [], $this->version);
@@ -117,8 +87,8 @@ class Kirki extends BaseModule
 	public function load_customizer_frontend_styles()
 	{
 		$css_file = apply_filters('vlt_framework_kirki_frontend_css', 'inc/kirki/css/customizer-frontend.css');
-		$css_path = LEEDO_THEME_DIR . $css_file;
-		$css_url = LEEDO_THEME_URI . $css_file;
+		$css_path = trailingslashit(get_template_directory()) . $css_file;
+		$css_url = trailingslashit(get_template_directory_uri()) . $css_file;
 
 		if (file_exists($css_path)) {
 			wp_enqueue_style('vlt-customizer-frontend', $css_url, [], $this->version);
@@ -134,7 +104,7 @@ class Kirki extends BaseModule
 		$customizer_file = apply_filters('vlt_framework_kirki_customizer_file', 'inc/kirki/customizer.php');
 
 		// Check if file exists in theme
-		$theme_customizer = LEEDO_THEME_DIR . $customizer_file;
+		$theme_customizer = trailingslashit(get_template_directory()) . $customizer_file;
 
 		if (file_exists($theme_customizer)) {
 			require_once $theme_customizer;
@@ -148,7 +118,7 @@ class Kirki extends BaseModule
 	{
 		// Load dynamic CSS file
 		$dynamic_css_file = apply_filters('vlt_framework_kirki_dynamic_css_file', 'inc/kirki/customizer-dynamic-css.php');
-		$theme_dynamic_css = LEEDO_THEME_DIR . $dynamic_css_file;
+		$theme_dynamic_css = trailingslashit(get_template_directory()) . $dynamic_css_file;
 
 		if (file_exists($theme_dynamic_css)) {
 			require_once $theme_dynamic_css;
@@ -182,8 +152,6 @@ class Kirki extends BaseModule
 
 	/**
 	 * Proxy Kirki::add_config
-	 *
-	 * @param array $args Config arguments
 	 */
 	public static function add_config($args)
 	{
@@ -195,9 +163,6 @@ class Kirki extends BaseModule
 
 	/**
 	 * Proxy Kirki::add_panel
-	 *
-	 * @param string $name Panel ID
-	 * @param array $args Panel arguments
 	 */
 	public static function add_panel($name, $args)
 	{
@@ -208,9 +173,6 @@ class Kirki extends BaseModule
 
 	/**
 	 * Proxy Kirki::add_section
-	 *
-	 * @param string $name Section ID
-	 * @param array $args Section arguments
 	 */
 	public static function add_section($name, $args)
 	{
@@ -220,9 +182,7 @@ class Kirki extends BaseModule
 	}
 
 	/**
-	 * Proxy Kirki::add_field and store defaults locally
-	 *
-	 * @param array $args Field arguments
+	 * Proxy Kirki::add_field and store defaults
 	 */
 	public static function add_field($args)
 	{
@@ -235,18 +195,13 @@ class Kirki extends BaseModule
 			\Kirki::add_field($config_id, $args);
 		}
 
-		// Store default value for later retrieval
 		if (isset($args['settings'], $args['default'])) {
 			self::$default_options[$args['settings']] = $args['default'];
 		}
 	}
 
 	/**
-	 * Get option from theme_mod or fallback to stored Kirki defaults or provided default
-	 *
-	 * @param string $name Option name
-	 * @param mixed $default Default value
-	 * @return mixed
+	 * Get option from theme_mod or fallback
 	 */
 	public static function get_option($name, $default = null)
 	{
@@ -254,15 +209,12 @@ class Kirki extends BaseModule
 			return $default;
 		}
 
-		// Try theme_mod first
 		$value = get_theme_mod($name, null);
 
-		// Fallback to stored default from field registration
 		if ($value === null && isset(self::$default_options[$name])) {
 			$value = self::$default_options[$name];
 		}
 
-		// Fallback to provided default
 		if ($value === null) {
 			$value = $default;
 		}
@@ -272,15 +224,6 @@ class Kirki extends BaseModule
 
 	/**
 	 * Universal theme option getter with ACF override support
-	 *
-	 * Order: ACF (post/options page) → theme_mod → stored field default → null
-	 * Archives/search/404 pages always return global values.
-	 *
-	 * @param string      $key      Setting key
-	 * @param bool        $use_acf  Try ACF first? (default: true)
-	 * @param int|null    $postID   Post ID for ACF (default: current post)
-	 * @param string|null $acf_name ACF field name if different from $key
-	 * @return mixed Theme mod value or null if not found
 	 */
 	public static function get_theme_mod($key, $use_acf = true, $postID = null, $acf_name = null)
 	{
@@ -290,14 +233,11 @@ class Kirki extends BaseModule
 
 		$value = null;
 
-		// 1. Try ACF (post-specific or options page)
 		if ($use_acf && function_exists('get_field')) {
-			// Skip ACF on archives/search/404
 			if (!is_archive() && !is_search() && !is_404()) {
 				$field_name = $acf_name ?: $key;
 				$postID = $postID ?: get_the_ID();
 
-				// Try post-specific ACF field
 				if ($postID) {
 					$acf_value = get_field($field_name, $postID);
 					if ($acf_value !== false && $acf_value !== null && $acf_value !== '') {
@@ -305,7 +245,6 @@ class Kirki extends BaseModule
 					}
 				}
 
-				// Try ACF options page if no post value
 				if ($value === null) {
 					$acf_options_value = get_field($field_name, 'option');
 					if ($acf_options_value !== false && $acf_options_value !== null && $acf_options_value !== '') {
@@ -315,7 +254,6 @@ class Kirki extends BaseModule
 			}
 		}
 
-		// 2. If no ACF value, use get_option() for theme_mod → stored default → null
 		if (empty($value)) {
 			$value = self::get_option($key);
 		}
@@ -325,10 +263,6 @@ class Kirki extends BaseModule
 
 	/**
 	 * Generate HSL CSS variables from color
-	 *
-	 * @param string $var_name CSS variable name
-	 * @param string $color Color value (hex, rgb, hsl)
-	 * @return string CSS variables
 	 */
 	public static function get_hsl_variables($var_name, $color)
 	{
@@ -336,14 +270,12 @@ class Kirki extends BaseModule
 			return '';
 		}
 
-		// Convert color to HSL
 		$hsl = self::hex_to_hsl($color);
 
 		if (!$hsl) {
 			return '';
 		}
 
-		// Generate CSS variables
 		$css = sprintf(
 			'%s: %d, %d%%, %d%%; %s-h: %d; %s-s: %d%%; %s-l: %d%%;',
 			$var_name,
@@ -363,16 +295,11 @@ class Kirki extends BaseModule
 
 	/**
 	 * Convert HEX to HSL
-	 *
-	 * @param string $hex Hex color
-	 * @return array|false HSL values or false
 	 */
 	private static function hex_to_hsl($hex)
 	{
-		// Remove # if present
 		$hex = ltrim($hex, '#');
 
-		// Convert hex to RGB
 		if (strlen($hex) == 3) {
 			$r = hexdec(str_repeat(substr($hex, 0, 1), 2));
 			$g = hexdec(str_repeat(substr($hex, 1, 1), 2));
@@ -385,7 +312,6 @@ class Kirki extends BaseModule
 			return false;
 		}
 
-		// Convert RGB to HSL
 		$r /= 255;
 		$g /= 255;
 		$b /= 255;
@@ -424,12 +350,9 @@ class Kirki extends BaseModule
 
 	/**
 	 * Get Kirki config ID
-	 *
-	 * @return string
 	 */
 	private static function get_config_id()
 	{
-		// Try to get from framework config
 		if (function_exists('vlt_framework')) {
 			$config = vlt_framework()->get_config('customizer', []);
 			return $config['config_id'] ?? 'vlt_customize';
@@ -439,9 +362,7 @@ class Kirki extends BaseModule
 	}
 
 	/**
-	 * Get all stored default options (for debugging)
-	 *
-	 * @return array
+	 * Get all stored default options
 	 */
 	public static function get_default_options()
 	{
