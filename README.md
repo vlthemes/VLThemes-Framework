@@ -137,10 +137,16 @@ The framework uses a modular architecture with the following module types:
 
 1.0.0
 
-## License
+## Credits
 
-This framework is proprietary software developed by VLThemes.
+**Developed by:** VLThemes
+**Version:** 1.0.0
+**License:** GPL v2 or later
 
 ## Support
 
-For support, please visit [VLThemes](https://vlthemes.com)
+For support, please visit [VLThemes Support](https://themeforest.net/user/vlthemes)
+
+---
+
+Made with ❤️ by VLThemes
