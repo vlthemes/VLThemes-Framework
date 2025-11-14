@@ -20,9 +20,7 @@ class Helpers extends BaseModule
 	/**
 	 * Register module
 	 */
-	public function register()
-	{
-	}
+	public function register() {}
 
 	/**
 	 * Get trimmed content
@@ -180,6 +178,58 @@ class Helpers extends BaseModule
 		$output = implode($delimiter, $list);
 
 		return apply_filters('vlt_framework_post_taxonomy', $output, $postID, $taxonomy, $delimiter, $get, $link);
+	}
+
+	/**
+	 * Get placeholder image source URL
+	 */
+	public static function get_placeholder_image_src()
+	{
+		$default_url = '';
+
+		// Use Elementor placeholder if available
+		if (class_exists('\Elementor\Utils')) {
+			$default_url = \Elementor\Utils::get_placeholder_image_src();
+		}
+
+		// Fallback to local placeholder image
+		if (empty($default_url) && defined('VLT_FRAMEWORK_URL')) {
+			$default_url = VLT_FRAMEWORK_URL . 'includes/img/placeholder.png';
+		}
+
+		// Allow filtering of placeholder image URL
+		return apply_filters('vlt_framework_placeholder_image_src', $default_url);
+	}
+
+	/**
+	 * Get placeholder image HTML
+	 */
+	public static function get_placeholder_image($class = '', $alt = '')
+	{
+		$image_src = self::get_placeholder_image_src();
+
+		if (empty($image_src)) {
+			return '';
+		}
+
+		$attrs = [
+			'src' => esc_url($image_src),
+			'alt' => esc_attr($alt ?: __('Placeholder', 'vlthemes-framework')),
+			'loading' => 'lazy'
+		];
+
+		if (!empty($class)) {
+			$attrs['class'] = trim($class);
+		}
+
+		$attrs_string = '';
+		foreach ($attrs as $key => $value) {
+			$attrs_string .= sprintf(' %s="%s"', $key, $value);
+		}
+
+		$output = sprintf('<img%s />', $attrs_string);
+
+		return apply_filters('vlt_framework_placeholder_image', $output, $image_src, $class, $alt);
 	}
 
 	/**

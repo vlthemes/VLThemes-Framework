@@ -459,3 +459,29 @@ if (! function_exists('vlt_get_field')) {
 		return $value;
 	}
 }
+
+/**
+ * Get placeholder image source URL
+ */
+if (! function_exists('vlt_get_placeholder_image_src')) {
+	function vlt_get_placeholder_image_src()
+	{
+		if (class_exists('\VLT\Framework\Modules\Utils\Helpers')) {
+			return \VLT\Framework\Modules\Utils\Helpers::get_placeholder_image_src();
+		}
+		return '';
+	}
+}
+
+/**
+ * Get placeholder image HTML
+ */
+if (! function_exists('vlt_get_placeholder_image')) {
+	function vlt_get_placeholder_image($class = '', $alt = '')
+	{
+		if (class_exists('\VLT\Framework\Modules\Utils\Helpers')) {
+			return \VLT\Framework\Modules\Utils\Helpers::get_placeholder_image($class, $alt);
+		}
+		return '';
+	}
+}
