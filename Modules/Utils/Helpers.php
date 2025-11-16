@@ -34,7 +34,7 @@ class Helpers extends BaseModule
 		$content = '';
 
 		if (is_numeric($content_or_post_id) || is_null($content_or_post_id)) {
-			$postID = $content_or_post_id ?: get_the_ID();
+			$postID = $content_or_post_id ?: self::get_the_ID();
 			$post    = get_post($postID);
 
 			if (! $post) {
@@ -268,5 +268,30 @@ class Helpers extends BaseModule
 		}
 
 		return apply_filters('vlt_framework_video_id', ['custom', esc_url_raw($url)], $url);
+	}
+
+	/**
+	 * Get current post ID with fallback to queried object
+	 */
+	public static function get_the_ID()
+	{
+		global $wp_query;
+
+		// In the loop - use standard get_the_ID()
+		if (in_the_loop()) {
+			return get_the_ID();
+		}
+
+		// Check if we have a post in the query
+		if (!empty($wp_query->post->ID)) {
+			return absint($wp_query->post->ID);
+		}
+
+		// Fallback to queried object on singular pages
+		if (is_singular() && !empty($wp_query->queried_object->ID)) {
+			return absint($wp_query->queried_object->ID);
+		}
+
+		return 0;
 	}
 }
