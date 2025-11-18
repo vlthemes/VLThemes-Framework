@@ -315,6 +315,7 @@ class Helpers extends BaseModule
 		}
 
 		// Prepare replacements array
+		$theme = wp_get_theme();
 		$replacements = array(
 			'{{YEAR}}'         => date('Y'),
 			'{{SITE_TITLE}}'   => get_bloginfo('name'),
@@ -323,7 +324,8 @@ class Helpers extends BaseModule
 			'{{ADMIN_EMAIL}}'  => get_bloginfo('admin_email'),
 			'{{PAGE_TITLE}}'   => get_the_title(),
 			'{{SITE_TAGLINE}}' => get_bloginfo('description'),
-			'{{PAGE_ID}}'      => self::get_the_ID()
+			'{{PAGE_ID}}'      => self::get_the_ID(),
+			'{{THEME_NAME}}'   => $theme->get('Name'),
 		);
 
 		// Allow themes/plugins to add custom dynamic variables
