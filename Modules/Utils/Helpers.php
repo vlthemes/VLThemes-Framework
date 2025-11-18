@@ -294,4 +294,44 @@ class Helpers extends BaseModule
 
 		return 0;
 	}
+
+	/**
+	 * Parse dynamic content variables in text
+	 *
+	 * Replaces dynamic variables with their actual values:
+	 * - {{YEAR}} - Current year (e.g., 2025)
+	 * - {{SITE_TITLE}} - Site title from WordPress settings
+	 * - {{SITE_URL}} - Home URL of the site
+	 * - {{SITE_NAME}} - Site name (blogname)
+	 * - {{ADMIN_EMAIL}} - Administrator email
+	 *
+	 * @param string $text Text containing dynamic variables
+	 * @return string Parsed text with replaced variables
+	 */
+	public static function parse_dynamic_content($text)
+	{
+		if (empty($text) || !is_string($text)) {
+			return $text;
+		}
+
+		// Prepare replacements array
+		$replacements = array(
+			'{{YEAR}}'         => date('Y'),
+			'{{SITE_TITLE}}'   => get_bloginfo('name'),
+			'{{SITE_URL}}'     => home_url('/'),
+			'{{SITE_NAME}}'    => get_bloginfo('name'),
+			'{{ADMIN_EMAIL}}'  => get_bloginfo('admin_email'),
+			'{{PAGE_TITLE}}'   => get_the_title(),
+			'{{SITE_TAGLINE}}' => get_bloginfo('description'),
+			'{{PAGE_ID}}'      => self::get_the_ID()
+		);
+
+		// Allow themes/plugins to add custom dynamic variables
+		$replacements = apply_filters('vlt_framework_dynamic_content_vars', $replacements);
+
+		// Perform replacements
+		$text = str_replace(array_keys($replacements), array_values($replacements), $text);
+
+		return $text;
+	}
 }
