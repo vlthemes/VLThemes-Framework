@@ -183,6 +183,28 @@ final class Framework
 		add_action('after_setup_theme', [$this, 'load_modules'], 5);
 		add_action('init', [$this, 'init'], 0);
 		add_action('wp_loaded', [$this, 'wp_loaded']);
+		add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_scripts']);
+	}
+
+	/**
+	 * Enqueue admin scripts and styles
+	 */
+	public function enqueue_admin_scripts()
+	{
+		wp_enqueue_script(
+			'vlt-framework-admin',
+			VLT_FRAMEWORK_URL . 'assets/js/admin.js',
+			[],
+			$this->get_version(),
+			true
+		);
+
+		wp_enqueue_style(
+			'vlt-framework-admin',
+			VLT_FRAMEWORK_URL . 'assets/css/admin.css',
+			[],
+			$this->get_version()
+		);
 	}
 
 	/**

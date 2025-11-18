@@ -47,9 +47,7 @@ class Kirki extends BaseModule
 	/**
 	 * Initialize module
 	 */
-	public function init()
-	{
-	}
+	public function init() {}
 
 
 	/**

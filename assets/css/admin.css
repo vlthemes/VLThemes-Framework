@@ -1,0 +1,177 @@
+/* ========================================
+ * Kirki Custom Separator
+ * ======================================== */
+.kirki-separator {
+	padding: 10px 12px;
+	margin: 0 -12px;
+	font-weight: 700;
+	color: #555d66;
+	text-align: center;
+	text-transform: uppercase;
+	letter-spacing: 2px;
+	background-color: #fff;
+	border-top: 1px solid #ddd;
+	border-bottom: 1px solid #ddd;
+	border-left: 4px solid #0073aa;
+}
+
+/* ========================================
+ * Post Format Icons (Dashicons)
+ * ======================================== */
+.format-quote .title:before,
+.format-link .title:before,
+.format-video .title:before,
+.format-audio .title:before,
+.format-gallery .title:before {
+	display: inline-block;
+	float: left;
+	width: 20px;
+	height: 20px;
+	margin-right: 0.5em;
+	font-family: dashicons;
+	font-size: 20px;
+	font-weight: 400;
+	font-style: normal;
+	line-height: 1;
+	text-align: center;
+	text-decoration: inherit;
+	text-transform: none;
+	vertical-align: top;
+	text-rendering: auto;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	speak: never;
+}
+
+/* Quote Format */
+.format-quote .title:before {
+	content: "\f122";
+}
+
+/* Link Format */
+.format-link .title:before {
+	content: "\f103";
+}
+
+/* Video Format */
+.format-video .title:before {
+	content: "\f236";
+}
+
+/* Audio Format */
+.format-audio .title:before {
+	content: "\f127";
+}
+
+/* Gallery Format */
+.format-gallery .title:before {
+	content: "\f233";
+}
+
+/* ========================================
+ * Customizer Accordion Trigger
+ * ======================================== */
+.accordion-section-title button.accordion-trigger {
+	padding-left: 40px !important;
+	background: none !important;
+}
+
+/* ========================================
+ * Customizer Section Title Icons
+ * ======================================== */
+#customize-outer-theme-controls .accordion-section-title::before,
+#customize-theme-controls .accordion-section-title::before {
+	position: absolute;
+	top: calc(50% - 10px);
+	left: 10px;
+	-webkit-transition: none;
+	transition: none;
+}
+
+/* ========================================
+ * Customizer Info Panel Icon
+ * ======================================== */
+#customize-controls .customize-info .panel-title::before {
+	position: relative;
+	top: 2px;
+	margin-right: 5px;
+}
+
+/* ========================================
+ * Kirki Notice
+ * ======================================== */
+.kirki-notice {
+	position: relative;
+	padding: 13px 12px 13px 40px;
+	font-size: 13px;
+	font-weight: normal;
+	line-height: 1.5;
+	border-left: 4px solid transparent;
+}
+
+.kirki-notice > a {
+	text-decoration: underline;
+}
+
+.kirki-notice::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 12px;
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	font-family: dashicons;
+	font-size: 20px;
+	font-weight: 400;
+	line-height: 1;
+	text-align: center;
+	transform: translateY(-50%);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	speak: none;
+}
+
+.kirki-notice-info {
+	color: #0073aa;
+	background: #c3e2ec;
+	border-left-color: #00a0d2;
+}
+
+.kirki-notice-info::before {
+	content: "\f348";
+	color: #00a0d2;
+}
+
+.kirki-notice-success {
+	color: #006e2a;
+	background: #e6f5e6;
+	border-left-color: #46b450;
+}
+
+.kirki-notice-success::before {
+	content: "\f147";
+	color: #46b450;
+}
+
+.kirki-notice-warning {
+	color: #b76a00;
+	background: #fff8e5;
+	border-left-color: #ffb900;
+}
+
+.kirki-notice-warning::before {
+	content: "\f227";
+	color: #ffb900;
+}
+
+.kirki-notice-error {
+	color: #d63638;
+	background: #fcebeb;
+	border-left-color: #dc3232;
+}
+
+.kirki-notice-error::before {
+	content: "\f153";
+	color: #dc3232;
+}
