@@ -38,8 +38,6 @@ Configure the framework using the `vlt_framework_config` filter in your theme's 
 
 ```php
 add_filter('vlt_framework_config', function($config) {
-    // Theme text domain
-    $config['text_domain'] = 'your-theme-textdomain';
 
     // Content width
     $config['content_width'] = 1310;

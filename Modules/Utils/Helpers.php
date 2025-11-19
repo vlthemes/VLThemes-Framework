@@ -20,31 +20,31 @@ class Helpers extends BaseModule
 	/**
 	 * Register module
 	 */
-	public function register() {}
+	public function register()
+	{
+		// Apply dynamic content parsing to WordPress content
+		add_filter('the_content', [__CLASS__, 'parse_dynamic_content'], 999);
+		add_filter('the_excerpt', [__CLASS__, 'parse_dynamic_content'], 999);
+		add_filter('widget_text', [__CLASS__, 'parse_dynamic_content'], 999);
+	}
 
 	/**
 	 * Get trimmed content
 	 */
-	public static function get_trimmed_content($content_or_post_id = null, $max_words = 18)
+	public static function get_trimmed_content($post_id = null, $max_words = 18)
 	{
 		if (! is_numeric($max_words) || $max_words < 1) {
 			$max_words = 18;
 		}
 
-		$content = '';
+		$postID = $post_id ?: self::get_the_ID();
+		$post    = get_post($postID);
 
-		if (is_numeric($content_or_post_id) || is_null($content_or_post_id)) {
-			$postID = $content_or_post_id ?: self::get_the_ID();
-			$post    = get_post($postID);
-
-			if (! $post) {
-				return '';
-			}
-
-			$content = ! empty($post->post_excerpt) ? $post->post_excerpt : $post->post_content;
-		} else {
-			$content = $content_or_post_id;
+		if (! $post) {
+			return '';
 		}
+
+		$content = ! empty($post->post_excerpt) ? $post->post_excerpt : $post->post_content;
 
 		if (empty($content)) {
 			return '';
@@ -69,9 +69,10 @@ class Helpers extends BaseModule
 		}
 
 		$content = implode(' ', $words);
+		$content = self::parse_dynamic_content($content);
 		$content = esc_html($content);
 
-		return apply_filters('vlt_framework_trimmed_content', $content, $content_or_post_id, $max_words);
+		return apply_filters('vlt_framework_trimmed_content', $content, $post_id, $max_words);
 	}
 
 	/**

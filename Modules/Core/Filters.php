@@ -57,10 +57,9 @@ class Filters extends BaseModule
 	 */
 	public function add_tooltip_to_cancel_reply($link)
 	{
-		$text_domain = $this->get_config('text_domain', 'vlt-framework');
 		return str_replace(
 			'<a ',
-			'<a data-tooltip="' . esc_attr__('Cancel', $text_domain) . '" ',
+			'<a data-tooltip="' . esc_attr__('Cancel', '@@textdomain') . '" ',
 			$link
 		);
 	}

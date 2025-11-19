@@ -32,7 +32,6 @@ class Actions extends BaseModule
 
 	public function skip_link()
 	{
-		$text_domain = $this->get_config('text_domain', 'vlt-framework');
-		echo '<a class="skip-link screen-reader-text" href="#content">' . esc_html__('Skip to content', $text_domain) . '</a>';
+		echo '<a class="skip-link screen-reader-text" href="#content">' . esc_html__('Skip to content', '@@textdomain') . '</a>';
 	}
 }

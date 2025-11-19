@@ -118,9 +118,8 @@ class Menus extends BaseModule
 			return;
 		}
 
-		$text_domain = function_exists('vlt_framework') ? vlt_framework()->get_config('text_domain', 'vlt-framework') : 'vlt-framework';
-		$menu_link = '<a href="' . esc_url(admin_url('nav-menus.php')) . '" target="_blank">' . esc_html__('Appearance > Menus', $text_domain) . '</a>';
-		$message = sprintf(esc_html__('Please register navigation from %s', $text_domain), $menu_link);
+		$menu_link = '<a href="' . esc_url(admin_url('nav-menus.php')) . '" target="_blank">' . esc_html__('Appearance > Menus', '@@textdomain') . '</a>';
+		$message = sprintf(esc_html__('Please register navigation from %s', '@@textdomain'), $menu_link);
 
 		echo '<p class="vlt-no-menu-message">' . wp_kses_post($message) . '</p>';
 	}

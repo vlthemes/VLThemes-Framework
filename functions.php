@@ -406,20 +406,20 @@ if (! function_exists('vlt_get_post_taxonomy')) {
 /**
  * Get trimmed content with word limit
  *
- * Trims post content or custom text to specified word count.
+ * Trims post content to specified word count.
  * Strips shortcodes and HTML tags, adds ellipsis.
  *
  * Wrapper for Helpers::get_trimmed_content() static method
  *
- * @param string|int|null $content_or_post_id Post ID or content string, null for current post
- * @param int             $max_words          Maximum number of words, default: 18
+ * @param int|null $post_id   Post ID, null for current post
+ * @param int      $max_words Maximum number of words, default: 18
  * @return string Trimmed content with ellipsis or empty string
  */
 if (! function_exists('vlt_get_trimmed_content')) {
-	function vlt_get_trimmed_content($content_or_post_id = null, $max_words = 18)
+	function vlt_get_trimmed_content($post_id = null, $max_words = 18)
 	{
 		if (class_exists('VLT\Framework\Modules\Utils\Helpers')) {
-			return \VLT\Framework\Modules\Utils\Helpers::get_trimmed_content($content_or_post_id, $max_words);
+			return \VLT\Framework\Modules\Utils\Helpers::get_trimmed_content($post_id, $max_words);
 		}
 		return '';
 	}
@@ -526,5 +526,24 @@ if (! function_exists('vlt_parse_dynamic_content')) {
 			return \VLT\Framework\Modules\Utils\Helpers::parse_dynamic_content($text);
 		}
 		return $text;
+	}
+}
+
+/**
+ * Get choices array for a specific Kirki setting
+ *
+ * Returns the choices array (key => value pairs) for a given Kirki setting ID.
+ * Useful for retrieving select options, radio options, etc.
+ *
+ * @param string $setting_id The Kirki setting ID
+ * @return array Choices array or empty array if not found
+ */
+if (! function_exists('vlt_get_setting_choices')) {
+	function vlt_get_setting_choices($setting_id)
+	{
+		if (class_exists('\VLT\Framework\Modules\Integrations\Kirki')) {
+			return \VLT\Framework\Modules\Integrations\Kirki::get_setting_choices($setting_id);
+		}
+		return [];
 	}
 }

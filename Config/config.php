@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Framework default configuration
  * Can be overridden via 'vlt_framework_config' filter
@@ -9,7 +10,6 @@ if (!defined('ABSPATH')) {
 }
 
 return [
-	'text_domain' => 'vlt-framework',
 	'content_width' => 1170,
 
 	'assets' => [

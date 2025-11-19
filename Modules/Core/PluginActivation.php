@@ -49,21 +49,8 @@ class PluginActivation extends BaseModule
 
 		$plugins = apply_filters('vlt_framework_tgmpa_plugins', array(), $default_source);
 
-		$text_domain = $this->get_config('text_domain', 'vlt-framework');
-		$config = array(
-			'id'           => $this->get_config('tgmpa_id', $text_domain),
-			'default_path' => $default_source,
-			'menu'         => 'tgmpa-install-plugins',
-			'has_notices'  => true,
-			'dismissable'  => true,
-			'is_automatic' => false,
-			'message'      => '',
-		);
-
-		$config = apply_filters('vlt_framework_tgmpa_config', $config);
-
 		if (function_exists('tgmpa')) {
-			tgmpa($plugins, $config);
+			tgmpa($plugins);
 		}
 	}
 
@@ -86,8 +73,7 @@ class PluginActivation extends BaseModule
 		foreach ($critical_plugins as $plugin) {
 			if (isset($plugin['class']) && ! class_exists($plugin['class'])) {
 				$missing_plugins[] = $plugin['name'];
-			}
-			elseif (isset($plugin['function']) && ! function_exists($plugin['function'])) {
+			} elseif (isset($plugin['function']) && ! function_exists($plugin['function'])) {
 				$missing_plugins[] = $plugin['name'];
 			}
 		}
@@ -97,13 +83,12 @@ class PluginActivation extends BaseModule
 				return '<strong>' . esc_html($name) . '</strong>';
 			}, $missing_plugins));
 
-			$text_domain = $this->get_config('text_domain', 'vlt-framework');
 			$message = sprintf(
 				_n(
 					'Please activate %s before you continue working with this theme.',
 					'Please activate the following plugins before you continue working with this theme: %s',
 					count($missing_plugins),
-					$text_domain
+					'@@textdomain'
 				),
 				$plugin_list
 			);

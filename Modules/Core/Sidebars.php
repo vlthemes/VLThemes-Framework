@@ -59,11 +59,10 @@ class Sidebars extends BaseModule
 	 */
 	private function register_shop_sidebar()
 	{
-		$text_domain = $this->get_config('text_domain', 'vlt-framework');
 		$this->register_single_sidebar([
-			'name' => __('Shop Sidebar', $text_domain),
+			'name' => __('Shop Sidebar', '@@textdomain'),
 			'id' => 'shop-sidebar',
-			'description' => __('Sidebar for WooCommerce shop pages.', $text_domain),
+			'description' => __('Sidebar for WooCommerce shop pages.', '@@textdomain'),
 		]);
 	}
 

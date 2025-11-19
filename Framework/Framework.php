@@ -102,6 +102,13 @@ final class Framework
 				'priority' => 1,
 			],
 
+			'woocommerce' => [
+				'class' => 'Modules\\Integrations\\WooCommerce',
+				'required' => false,
+				'enabled' => $this->get_config('modules.woocommerce', true),
+				'priority' => 2,
+			],
+
 			'helpers' => [
 				'class' => 'Modules\\Utils\\Helpers',
 				'required' => true,

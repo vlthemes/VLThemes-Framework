@@ -366,4 +366,30 @@ class Kirki extends BaseModule
 	{
 		return self::$default_options;
 	}
+
+	/**
+	 * Get choices array for a specific Kirki setting
+	 *
+	 * Returns the choices array (key => value pairs) for a given Kirki setting ID.
+	 * Useful for retrieving select options, radio options, etc.
+	 *
+	 * @param string $setting_id The Kirki setting ID
+	 * @return array Choices array or empty array if not found
+	 */
+	public static function get_setting_choices($setting_id)
+	{
+		if (!class_exists('Kirki')) {
+			return [];
+		}
+
+		// Get all registered fields from Kirki
+		$fields = \Kirki::$all_fields ?? [];
+
+		// Search for the setting
+		if (isset($fields[$setting_id])) {
+			return $fields[$setting_id]['choices'] ?? [];
+		}
+
+		return [];
+	}
 }

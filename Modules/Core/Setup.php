@@ -16,15 +16,12 @@ class Setup extends BaseModule
 
 	protected $name = 'setup';
 	protected $version = '1.0.0';
-	private $text_domain;
 
 	/**
 	 * Register module
 	 */
 	public function register()
 	{
-		$this->text_domain = $this->get_config('text_domain', 'vlt-framework');
-		$this->text_domain = apply_filters('vlt_framework_text_domain', $this->text_domain);
 
 		add_action('after_setup_theme', [$this, 'theme_setup']);
 		add_action('after_setup_theme', [$this, 'content_width'], 0);
@@ -40,7 +37,7 @@ class Setup extends BaseModule
 			get_template_directory() . '/languages'
 		);
 
-		load_theme_textdomain($this->text_domain, $theme_domain_path);
+		load_theme_textdomain('@@textdomain', $theme_domain_path);
 
 		$this->add_theme_support();
 		$this->register_image_sizes();
