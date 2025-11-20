@@ -445,7 +445,7 @@ if (! function_exists('vlt_get_field')) {
 		}
 
 		if ($postID === null) {
-			$postID = vlt_get_the_ID();
+			$postID = get_the_ID();
 		}
 
 		$value = null;
@@ -483,26 +483,6 @@ if (! function_exists('vlt_get_placeholder_image')) {
 			return \VLT\Framework\Modules\Utils\Helpers::get_placeholder_image($class, $alt);
 		}
 		return '';
-	}
-}
-
-/**
- * Get current post ID with fallback to queried object
- *
- * Intelligently retrieves the current post ID with multiple fallbacks:
- * - In loop: uses standard get_the_ID()
- * - Outside loop: checks $wp_query->post->ID
- * - Singular pages: falls back to queried_object->ID
- *
- * @return int Post ID or 0 if not found
- */
-if (! function_exists('vlt_get_the_ID')) {
-	function vlt_get_the_ID()
-	{
-		if (class_exists('\VLT\Framework\Modules\Utils\Helpers')) {
-			return \VLT\Framework\Modules\Utils\Helpers::get_the_ID();
-		}
-		return get_the_ID() ?: 0;
 	}
 }
 

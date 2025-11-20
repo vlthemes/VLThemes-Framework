@@ -37,7 +37,7 @@ class Helpers extends BaseModule
 			$max_words = 18;
 		}
 
-		$postID = $post_id ?: self::get_the_ID();
+		$postID = $post_id ?: get_the_ID();
 		$post    = get_post($postID);
 
 		if (! $post) {
@@ -72,7 +72,7 @@ class Helpers extends BaseModule
 		$content = self::parse_dynamic_content($content);
 		$content = esc_html($content);
 
-		return apply_filters('vlt_framework_trimmed_content', $content, $post_id, $max_words);
+		return apply_filters('vlt_framework_trimmed_content', $content, $max_words);
 	}
 
 	/**
@@ -272,31 +272,6 @@ class Helpers extends BaseModule
 	}
 
 	/**
-	 * Get current post ID with fallback to queried object
-	 */
-	public static function get_the_ID()
-	{
-		global $wp_query;
-
-		// In the loop - use standard get_the_ID()
-		if (in_the_loop()) {
-			return get_the_ID();
-		}
-
-		// Check if we have a post in the query
-		if (!empty($wp_query->post->ID)) {
-			return absint($wp_query->post->ID);
-		}
-
-		// Fallback to queried object on singular pages
-		if (is_singular() && !empty($wp_query->queried_object->ID)) {
-			return absint($wp_query->queried_object->ID);
-		}
-
-		return 0;
-	}
-
-	/**
 	 * Parse dynamic content variables in text
 	 *
 	 * Replaces dynamic variables with their actual values:
@@ -325,7 +300,7 @@ class Helpers extends BaseModule
 			'{{ADMIN_EMAIL}}'  => get_bloginfo('admin_email'),
 			'{{PAGE_TITLE}}'   => get_the_title(),
 			'{{SITE_TAGLINE}}' => get_bloginfo('description'),
-			'{{PAGE_ID}}'      => self::get_the_ID(),
+			'{{PAGE_ID}}'      => get_the_ID(),
 			'{{THEME_NAME}}'   => $theme->get('Name'),
 		);
 
