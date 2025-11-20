@@ -2,18 +2,17 @@
 
 namespace VLT\Framework;
 
-if (!defined('ABSPATH')) {
+if (! defined('ABSPATH')) {
 	exit;
 }
 
 final class Framework
 {
-
-	const VERSION = '1.0.0';
+	public const VERSION = '1.0.0';
 
 	private static $instance = null;
-	private $config = [];
-	private $modules = [];
+	private $config          = [];
+	private $modules         = [];
 	private $module_registry = [];
 
 	/**
@@ -21,9 +20,10 @@ final class Framework
 	 */
 	public static function instance()
 	{
-		if (null === self::$instance) {
+		if (self::$instance === null) {
 			self::$instance = new self();
 		}
+
 		return self::$instance;
 	}
 
@@ -38,9 +38,11 @@ final class Framework
 		$this->init_hooks();
 	}
 
-	private function __clone() {}
+	private function __clone()
+	{
+	}
 
-	public function __wakeup()
+	public function __wakeup(): void
 	{
 		throw new \Exception('Cannot unserialize singleton');
 	}
@@ -48,189 +50,196 @@ final class Framework
 	/**
 	 * Initialize autoloader
 	 */
-	private function init_autoloader()
+	private function init_autoloader(): void
 	{
-		spl_autoload_register(function ($class) {
-			$prefix = 'VLT\\Framework\\';
-			$base_dir = VLT_FRAMEWORK_PATH;
+		spl_autoload_register(
+			function ($class): void {
+				$prefix   = 'VLT\\Framework\\';
+				$base_dir = VLT_FW_PATH;
 
-			$len = strlen($prefix);
-			if (strncmp($prefix, $class, $len) !== 0) {
-				return;
-			}
+				$len = strlen($prefix);
 
-			$relative_class = substr($class, $len);
-			$file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+				if (strncmp($prefix, $class, $len) !== 0) {
+					return;
+				}
 
-			if (file_exists($file)) {
-				require_once $file;
-			}
-		});
+				$relative_class = substr($class, $len);
+				$file           = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+
+				if (file_exists($file)) {
+					require_once $file;
+				}
+			},
+		);
 	}
 
 	/**
 	 * Load framework configuration
 	 */
-	private function load_config()
+	private function load_config(): void
 	{
-		$config_file = VLT_FRAMEWORK_PATH . 'Config/config.php';
+		$config_file = VLT_FW_PATH . 'Config/config.php';
 
 		if (file_exists($config_file)) {
 			$this->config = require $config_file;
 		}
 
-		$this->config = apply_filters('vlt_framework_config', $this->config);
+		$this->config = apply_filters('vlt_fw_config', $this->config);
 	}
 
 	/**
 	 * Register all available modules
 	 */
-	private function register_modules()
+	private function register_modules(): void
 	{
 		$this->module_registry = [
 			'sanitize' => [
-				'class' => 'Modules\\Utils\\Sanitize',
+				'class'    => 'Modules\\Utils\\Sanitize',
 				'required' => true,
-				'enabled' => $this->get_config('modules.sanitize', true),
+				'enabled'  => $this->get_config('modules.sanitize', true),
 				'priority' => 1,
 			],
 
 			'kirki' => [
-				'class' => 'Modules\\Integrations\\Kirki',
+				'class'    => 'Modules\\Integrations\\Kirki',
 				'required' => true,
-				'enabled' => $this->get_config('modules.kirki', true),
+				'enabled'  => $this->get_config('modules.kirki', true),
 				'priority' => 1,
 			],
 
 			'woocommerce' => [
-				'class' => 'Modules\\Integrations\\WooCommerce',
+				'class'    => 'Modules\\Integrations\\WooCommerce',
 				'required' => false,
-				'enabled' => $this->get_config('modules.woocommerce', true),
+				'enabled'  => $this->get_config('modules.woocommerce', true),
 				'priority' => 2,
 			],
 
 			'helpers' => [
-				'class' => 'Modules\\Utils\\Helpers',
+				'class'    => 'Modules\\Utils\\Helpers',
 				'required' => true,
-				'enabled' => $this->get_config('modules.helpers', true),
+				'enabled'  => $this->get_config('modules.helpers', true),
 				'priority' => 5,
 			],
 
 			'setup' => [
-				'class' => 'Modules\\Core\\Setup',
+				'class'    => 'Modules\\Core\\Setup',
 				'required' => true,
-				'enabled' => $this->get_config('modules.setup', true),
+				'enabled'  => $this->get_config('modules.setup', true),
 				'priority' => 10,
 			],
 			'assets' => [
-				'class' => 'Modules\\Core\\Assets',
+				'class'    => 'Modules\\Core\\Assets',
 				'required' => true,
-				'enabled' => $this->get_config('modules.assets', true),
+				'enabled'  => $this->get_config('modules.assets', true),
 				'priority' => 10,
 			],
 			'body_class' => [
-				'class' => 'Modules\\Core\\BodyClass',
+				'class'    => 'Modules\\Core\\BodyClass',
 				'required' => true,
-				'enabled' => $this->get_config('modules.body_class', true),
+				'enabled'  => $this->get_config('modules.body_class', true),
 				'priority' => 10,
 			],
 			'menus' => [
-				'class' => 'Modules\\Core\\Menus',
+				'class'    => 'Modules\\Core\\Menus',
 				'required' => true,
-				'enabled' => $this->get_config('modules.menus', true),
+				'enabled'  => $this->get_config('modules.menus', true),
 				'priority' => 10,
 			],
 			'sidebars' => [
-				'class' => 'Modules\\Core\\Sidebars',
+				'class'    => 'Modules\\Core\\Sidebars',
 				'required' => true,
-				'enabled' => $this->get_config('modules.sidebars', true),
+				'enabled'  => $this->get_config('modules.sidebars', true),
 				'priority' => 10,
 			],
 			'filters' => [
-				'class' => 'Modules\\Core\\Filters',
+				'class'    => 'Modules\\Core\\Filters',
 				'required' => true,
-				'enabled' => $this->get_config('modules.filters', true),
+				'enabled'  => $this->get_config('modules.filters', true),
 				'priority' => 10,
 			],
 			'actions' => [
-				'class' => 'Modules\\Core\\Actions',
+				'class'    => 'Modules\\Core\\Actions',
 				'required' => true,
-				'enabled' => $this->get_config('modules.actions', true),
+				'enabled'  => $this->get_config('modules.actions', true),
 				'priority' => 10,
 			],
 			'plugin_activation' => [
-				'class' => 'Modules\\Core\\PluginActivation',
+				'class'    => 'Modules\\Core\\PluginActivation',
 				'required' => true,
-				'enabled' => $this->get_config('modules.plugin_activation', true),
+				'enabled'  => $this->get_config('modules.plugin_activation', true),
 				'priority' => 10,
 			],
 
 			'icons' => [
-				'class' => 'Modules\\Features\\Icons',
+				'class'    => 'Modules\\Features\\Icons',
 				'required' => false,
-				'enabled' => $this->get_config('modules.icons', true),
+				'enabled'  => $this->get_config('modules.icons', true),
 				'priority' => 20,
 			],
 		];
 
-		$this->module_registry = apply_filters('vlt_framework_register_modules', $this->module_registry);
+		$this->module_registry = apply_filters('vlt_fw_register_modules', $this->module_registry);
 
-		uasort($this->module_registry, function ($a, $b) {
-			$priority_a = $a['priority'] ?? 20;
-			$priority_b = $b['priority'] ?? 20;
-			return $priority_a - $priority_b;
-		});
+		uasort(
+			$this->module_registry,
+			function ($a, $b) {
+				$priority_a = $a['priority'] ?? 20;
+				$priority_b = $b['priority'] ?? 20;
+
+				return $priority_a - $priority_b;
+			},
+		);
 	}
 
 	/**
 	 * Initialize WordPress hooks
 	 */
-	private function init_hooks()
+	private function init_hooks(): void
 	{
-		add_action('after_setup_theme', [$this, 'load_modules'], 5);
-		add_action('init', [$this, 'init'], 0);
-		add_action('wp_loaded', [$this, 'wp_loaded']);
-		add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_scripts']);
+		add_action('after_setup_theme', [ $this, 'load_modules' ], 5);
+		add_action('init', [ $this, 'init' ], 0);
+		add_action('wp_loaded', [ $this, 'wp_loaded' ]);
+		add_action('admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ]);
 	}
 
 	/**
 	 * Enqueue admin scripts and styles
 	 */
-	public function enqueue_admin_scripts()
+	public function enqueue_admin_scripts(): void
 	{
 		wp_enqueue_script(
 			'vlt-framework-admin',
-			VLT_FRAMEWORK_URL . 'assets/js/admin.js',
+			VLT_FW_URL . 'assets/js/admin.js',
 			[],
 			$this->get_version(),
-			true
+			true,
 		);
 
 		wp_enqueue_style(
 			'vlt-framework-admin',
-			VLT_FRAMEWORK_URL . 'assets/css/admin.css',
+			VLT_FW_URL . 'assets/css/admin.css',
 			[],
-			$this->get_version()
+			$this->get_version(),
 		);
 	}
 
 	/**
 	 * Load and instantiate modules
 	 */
-	public function load_modules()
+	public function load_modules(): void
 	{
 		foreach ($this->module_registry as $key => $module_data) {
-			if (!$module_data['enabled']) {
+			if (! $module_data['enabled']) {
 				continue;
 			}
 
-			if (isset($module_data['condition']) && !$this->check_condition($module_data['condition'])) {
+			if (isset($module_data['condition']) && ! $this->check_condition($module_data['condition'])) {
 				continue;
 			}
 
 			$class = 'VLT\\Framework\\' . $module_data['class'];
 
-			if (!class_exists($class)) {
+			if (! class_exists($class)) {
 				if ($module_data['required'] && defined('WP_DEBUG') && WP_DEBUG) {
 					error_log(sprintf('VLT Framework: Required module class "%s" not found', $class));
 				}
@@ -238,10 +247,10 @@ final class Framework
 			}
 
 			try {
-				$this->modules[$key] = new $class($this);
+				$this->modules[ $key ] = new $class($this);
 
-				if (method_exists($this->modules[$key], 'register')) {
-					$this->modules[$key]->register();
+				if (method_exists($this->modules[ $key ], 'register')) {
+					$this->modules[ $key ]->register();
 				}
 			} catch (\Exception $e) {
 				if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -254,7 +263,7 @@ final class Framework
 			}
 		}
 
-		do_action('vlt_framework_modules_loaded', $this->modules);
+		do_action('vlt_fw_modules_loaded', $this->modules);
 	}
 
 	/**
@@ -264,16 +273,19 @@ final class Framework
 	{
 		if (strpos($condition, 'class_exists:') === 0) {
 			$class = str_replace('class_exists:', '', $condition);
+
 			return class_exists($class);
 		}
 
 		if (strpos($condition, 'function_exists:') === 0) {
 			$function = str_replace('function_exists:', '', $condition);
+
 			return function_exists($function);
 		}
 
 		if (strpos($condition, 'did_action:') === 0) {
 			$action = str_replace('did_action:', '', $condition);
+
 			return did_action($action);
 		}
 
@@ -283,7 +295,7 @@ final class Framework
 	/**
 	 * Initialize framework
 	 */
-	public function init()
+	public function init(): void
 	{
 		foreach ($this->modules as $module) {
 			if (method_exists($module, 'init')) {
@@ -291,15 +303,15 @@ final class Framework
 			}
 		}
 
-		do_action('vlt_framework_init');
+		do_action('vlt_fw_init');
 	}
 
 	/**
 	 * WordPress fully loaded
 	 */
-	public function wp_loaded()
+	public function wp_loaded(): void
 	{
-		do_action('vlt_framework_loaded');
+		do_action('vlt_fw_loaded');
 	}
 
 	/**
@@ -307,7 +319,7 @@ final class Framework
 	 */
 	public function get_module($name)
 	{
-		return $this->modules[$name] ?? null;
+		return $this->modules[ $name ] ?? null;
 	}
 
 	/**
@@ -323,7 +335,7 @@ final class Framework
 	 */
 	public function has_module($name)
 	{
-		return isset($this->modules[$name]);
+		return isset($this->modules[ $name ]);
 	}
 
 	/**
@@ -331,14 +343,14 @@ final class Framework
 	 */
 	public function get_config($key, $default = null)
 	{
-		$keys = explode('.', $key);
+		$keys  = explode('.', $key);
 		$value = $this->config;
 
 		foreach ($keys as $k) {
-			if (!isset($value[$k])) {
+			if (! isset($value[ $k ])) {
 				return $default;
 			}
-			$value = $value[$k];
+			$value = $value[ $k ];
 		}
 
 		return $value;
@@ -347,19 +359,19 @@ final class Framework
 	/**
 	 * Set configuration value (supports dot notation)
 	 */
-	public function set_config($key, $value)
+	public function set_config($key, $value): void
 	{
-		$keys = explode('.', $key);
+		$keys   = explode('.', $key);
 		$config = &$this->config;
 
 		foreach ($keys as $i => $k) {
 			if ($i === count($keys) - 1) {
-				$config[$k] = $value;
+				$config[ $k ] = $value;
 			} else {
-				if (!isset($config[$k]) || !is_array($config[$k])) {
-					$config[$k] = [];
+				if (! isset($config[ $k ]) || ! is_array($config[ $k ])) {
+					$config[ $k ] = [];
 				}
-				$config = &$config[$k];
+				$config = &$config[ $k ];
 			}
 		}
 	}
@@ -388,12 +400,12 @@ final class Framework
 		$debug = [];
 
 		foreach ($this->module_registry as $key => $data) {
-			$debug[$key] = [
+			$debug[ $key ] = [
 				'registered' => true,
-				'loaded' => isset($this->modules[$key]),
-				'enabled' => $data['enabled'],
-				'required' => $data['required'],
-				'class' => $data['class'],
+				'loaded'     => isset($this->modules[ $key ]),
+				'enabled'    => $data['enabled'],
+				'required'   => $data['required'],
+				'class'      => $data['class'],
 			];
 		}
 

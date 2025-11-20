@@ -4,7 +4,7 @@ namespace VLT\Framework\Modules\Core;
 
 use VLT\Framework\BaseModule;
 
-if (!defined('ABSPATH')) {
+if (! defined('ABSPATH')) {
 	exit;
 }
 
@@ -13,28 +13,27 @@ if (!defined('ABSPATH')) {
  */
 class Setup extends BaseModule
 {
-
-	protected $name = 'setup';
+	protected $name    = 'setup';
 	protected $version = '1.0.0';
 
 	/**
 	 * Register module
 	 */
-	public function register()
+	public function register(): void
 	{
 
-		add_action('after_setup_theme', [$this, 'theme_setup']);
-		add_action('after_setup_theme', [$this, 'content_width'], 0);
+		add_action('after_setup_theme', [ $this, 'theme_setup' ]);
+		add_action('after_setup_theme', [ $this, 'content_width' ], 0);
 	}
 
 	/**
 	 * Theme setup
 	 */
-	public function theme_setup()
+	public function theme_setup(): void
 	{
 		$theme_domain_path = apply_filters(
-			'vlt_framework_theme_domain_path',
-			get_template_directory() . '/languages'
+			'vlt_fw_theme_domain_path',
+			get_template_directory() . '/languages',
 		);
 
 		load_theme_textdomain('@@textdomain', $theme_domain_path);
@@ -42,13 +41,13 @@ class Setup extends BaseModule
 		$this->add_theme_support();
 		$this->register_image_sizes();
 
-		do_action('vlt_framework_after_theme_setup');
+		do_action('vlt_fw_after_theme_setup');
 	}
 
 	/**
 	 * Add theme support features from config
 	 */
-	private function add_theme_support()
+	private function add_theme_support(): void
 	{
 		$supports = $this->get_config('theme_support', []);
 
@@ -64,7 +63,7 @@ class Setup extends BaseModule
 	/**
 	 * Register custom image sizes from config
 	 */
-	private function register_image_sizes()
+	private function register_image_sizes(): void
 	{
 		$sizes = $this->get_config('image_sizes', []);
 
@@ -73,7 +72,7 @@ class Setup extends BaseModule
 				$name,
 				$size[0] ?? 0,
 				$size[1] ?? 0,
-				$size[2] ?? false
+				$size[2] ?? false,
 			);
 		}
 	}
@@ -81,8 +80,8 @@ class Setup extends BaseModule
 	/**
 	 * Set content width
 	 */
-	public function content_width()
+	public function content_width(): void
 	{
-		$GLOBALS['content_width'] = apply_filters('vlt_framework_content_width', 1300);
+		$GLOBALS['content_width'] = apply_filters('vlt_fw_content_width', 1300);
 	}
 }

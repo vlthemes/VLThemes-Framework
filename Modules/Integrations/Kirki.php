@@ -4,7 +4,7 @@ namespace VLT\Framework\Modules\Integrations;
 
 use VLT\Framework\BaseModule;
 
-if (!defined('ABSPATH')) {
+if (! defined('ABSPATH')) {
 	exit;
 }
 
@@ -13,8 +13,7 @@ if (!defined('ABSPATH')) {
  */
 class Kirki extends BaseModule
 {
-
-	protected $name = 'kirki';
+	protected $name    = 'kirki';
 	protected $version = '1.0.0';
 	private $config_id;
 	private static $default_options = [];
@@ -22,57 +21,61 @@ class Kirki extends BaseModule
 	/**
 	 * Register module
 	 */
-	public function register()
+	public function register(): void
 	{
-		add_action('admin_enqueue_scripts', [$this, 'load_customizer_editor_styles']);
+		add_action('admin_enqueue_scripts', [ $this, 'load_customizer_editor_styles' ]);
 
-		if (!class_exists('Kirki')) {
-			add_action('wp_enqueue_scripts', [$this, 'load_customizer_frontend_styles']);
+		if (! class_exists('Kirki')) {
+			add_action('wp_enqueue_scripts', [ $this, 'load_customizer_frontend_styles' ]);
 		}
 
-		$config = $this->get_config('customizer', []);
+		$config          = $this->get_config('customizer', []);
 		$this->config_id = $config['config_id'] ?? 'vlt_customize';
 
 		$this->init_kirki_config();
 
-		add_action('init', [$this, 'load_theme_customizer'], 10);
-		add_action('init', [$this, 'register_customizer_elements'], 20);
-		add_action('init', [$this, 'load_dynamic_css_config'], 30);
+		add_action('init', [ $this, 'load_theme_customizer' ], 10);
+		add_action('init', [ $this, 'register_customizer_elements' ], 20);
+		add_action('init', [ $this, 'load_dynamic_css_config' ], 30);
 
-		if (!empty($this->config_id)) {
-			add_filter('kirki_' . $this->config_id . '_dynamic_css', [$this, 'output_dynamic_css']);
+		if (! empty($this->config_id)) {
+			add_filter('kirki_' . $this->config_id . '_dynamic_css', [ $this, 'output_dynamic_css' ]);
 		}
 	}
 
 	/**
 	 * Initialize module
 	 */
-	public function init() {}
-
+	public function init(): void
+	{
+	}
 
 	/**
 	 * Initialize Kirki configuration
 	 */
-	private function init_kirki_config()
+	private function init_kirki_config(): void
 	{
 		if (class_exists('Kirki')) {
 			$config = $this->get_config('customizer', []);
 
-			\Kirki::add_config($this->config_id, [
-				'capability' => $config['capability'] ?? 'edit_theme_options',
-				'option_type' => $config['option_type'] ?? 'theme_mod',
-			]);
+			\Kirki::add_config(
+				$this->config_id,
+				[
+					'capability'  => $config['capability'] ?? 'edit_theme_options',
+					'option_type' => $config['option_type'] ?? 'theme_mod',
+				],
+			);
 		}
 	}
 
 	/**
 	 * Load customizer editor styles (admin)
 	 */
-	public function load_customizer_editor_styles()
+	public function load_customizer_editor_styles(): void
 	{
-		$css_file = apply_filters('vlt_framework_kirki_editor_css', 'inc/kirki/css/customizer-editor.css');
+		$css_file = apply_filters('vlt_fw_kirki_editor_css', 'inc/kirki/css/customizer-editor.css');
 		$css_path = trailingslashit(get_template_directory()) . $css_file;
-		$css_url = trailingslashit(get_template_directory_uri()) . $css_file;
+		$css_url  = trailingslashit(get_template_directory_uri()) . $css_file;
 
 		if (file_exists($css_path)) {
 			wp_enqueue_style('vlt-customizer-editor', $css_url, [], $this->version);
@@ -82,11 +85,11 @@ class Kirki extends BaseModule
 	/**
 	 * Load customizer frontend styles
 	 */
-	public function load_customizer_frontend_styles()
+	public function load_customizer_frontend_styles(): void
 	{
-		$css_file = apply_filters('vlt_framework_kirki_frontend_css', 'inc/kirki/css/customizer-frontend.css');
+		$css_file = apply_filters('vlt_fw_kirki_frontend_css', 'inc/kirki/css/customizer-frontend.css');
 		$css_path = trailingslashit(get_template_directory()) . $css_file;
-		$css_url = trailingslashit(get_template_directory_uri()) . $css_file;
+		$css_url  = trailingslashit(get_template_directory_uri()) . $css_file;
 
 		if (file_exists($css_path)) {
 			wp_enqueue_style('vlt-customizer-frontend', $css_url, [], $this->version);
@@ -96,10 +99,10 @@ class Kirki extends BaseModule
 	/**
 	 * Load theme customizer configuration file
 	 */
-	public function load_theme_customizer()
+	public function load_theme_customizer(): void
 	{
 		// Allow theme to specify customizer file path
-		$customizer_file = apply_filters('vlt_framework_kirki_customizer_file', 'inc/kirki/customizer.php');
+		$customizer_file = apply_filters('vlt_fw_kirki_customizer_file', 'inc/kirki/customizer.php');
 
 		// Check if file exists in theme
 		$theme_customizer = trailingslashit(get_template_directory()) . $customizer_file;
@@ -112,10 +115,10 @@ class Kirki extends BaseModule
 	/**
 	 * Load dynamic CSS configuration file
 	 */
-	public function load_dynamic_css_config()
+	public function load_dynamic_css_config(): void
 	{
 		// Load dynamic CSS file
-		$dynamic_css_file = apply_filters('vlt_framework_kirki_dynamic_css_file', 'inc/kirki/customizer-dynamic-css.php');
+		$dynamic_css_file  = apply_filters('vlt_fw_kirki_dynamic_css_file', 'inc/kirki/customizer-dynamic-css.php');
 		$theme_dynamic_css = trailingslashit(get_template_directory()) . $dynamic_css_file;
 
 		if (file_exists($theme_dynamic_css)) {
@@ -126,10 +129,10 @@ class Kirki extends BaseModule
 	/**
 	 * Register customizer elements (panels, sections, fields)
 	 */
-	public function register_customizer_elements()
+	public function register_customizer_elements(): void
 	{
 		// Allow theme to add custom elements via static methods
-		do_action('vlt_framework_kirki_register', $this->config_id);
+		do_action('vlt_fw_kirki_register', $this->config_id);
 	}
 
 	/**
@@ -138,10 +141,10 @@ class Kirki extends BaseModule
 	public function output_dynamic_css($styles)
 	{
 		// Get additional styles from framework filter
-		$additional_styles = apply_filters('vlt_framework_kirki_dynamic_css', '');
+		$additional_styles = apply_filters('vlt_fw_kirki_dynamic_css', '');
 
 		// Concatenate additional styles with existing Kirki styles
-		if (!empty($additional_styles)) {
+		if (! empty($additional_styles)) {
 			$styles .= "\n" . $additional_styles;
 		}
 
@@ -151,9 +154,9 @@ class Kirki extends BaseModule
 	/**
 	 * Proxy Kirki::add_config
 	 */
-	public static function add_config($args)
+	public static function add_config($args): void
 	{
-		if (class_exists('Kirki') && is_array($args) && !empty($args)) {
+		if (class_exists('Kirki') && is_array($args) && ! empty($args)) {
 			$config_id = self::get_config_id();
 			\Kirki::add_config($config_id, $args);
 		}
@@ -162,9 +165,9 @@ class Kirki extends BaseModule
 	/**
 	 * Proxy Kirki::add_panel
 	 */
-	public static function add_panel($name, $args)
+	public static function add_panel($name, $args): void
 	{
-		if (class_exists('Kirki') && is_string($name) && is_array($args) && !empty($args)) {
+		if (class_exists('Kirki') && is_string($name) && is_array($args) && ! empty($args)) {
 			\Kirki::add_panel($name, $args);
 		}
 	}
@@ -172,9 +175,9 @@ class Kirki extends BaseModule
 	/**
 	 * Proxy Kirki::add_section
 	 */
-	public static function add_section($name, $args)
+	public static function add_section($name, $args): void
 	{
-		if (class_exists('Kirki') && is_string($name) && is_array($args) && !empty($args)) {
+		if (class_exists('Kirki') && is_string($name) && is_array($args) && ! empty($args)) {
 			\Kirki::add_section($name, $args);
 		}
 	}
@@ -182,9 +185,9 @@ class Kirki extends BaseModule
 	/**
 	 * Proxy Kirki::add_field and store defaults
 	 */
-	public static function add_field($args)
+	public static function add_field($args): void
 	{
-		if (!is_array($args) || empty($args)) {
+		if (! is_array($args) || empty($args)) {
 			return;
 		}
 
@@ -194,7 +197,7 @@ class Kirki extends BaseModule
 		}
 
 		if (isset($args['settings'], $args['default'])) {
-			self::$default_options[$args['settings']] = $args['default'];
+			self::$default_options[ $args['settings'] ] = $args['default'];
 		}
 	}
 
@@ -209,8 +212,8 @@ class Kirki extends BaseModule
 
 		$value = get_theme_mod($name, null);
 
-		if ($value === null && isset(self::$default_options[$name])) {
-			$value = self::$default_options[$name];
+		if ($value === null && isset(self::$default_options[ $name ])) {
+			$value = self::$default_options[ $name ];
 		}
 
 		if ($value === null) {
@@ -223,7 +226,7 @@ class Kirki extends BaseModule
 	/**
 	 * Universal theme option getter with ACF override support
 	 */
-	public static function get_theme_mod($key, $use_acf = true, $postID = null, $acf_name = null)
+	public static function get_theme_mod($key, $use_acf = true, $post_id = null, $acf_name = null)
 	{
 		if (empty($key)) {
 			return null;
@@ -232,12 +235,13 @@ class Kirki extends BaseModule
 		$value = null;
 
 		if ($use_acf && function_exists('get_field')) {
-			if (!is_archive() && !is_search() && !is_404()) {
+			if (! is_archive() && ! is_search() && ! is_404()) {
 				$field_name = $acf_name ?: $key;
-				$postID = $postID ?: get_the_ID();
+				$post_id    = $post_id ?: get_the_ID();
 
-				if ($postID) {
-					$acf_value = get_field($field_name, $postID);
+				if ($post_id) {
+					$acf_value = get_field($field_name, $post_id);
+
 					if ($acf_value !== false && $acf_value !== null && $acf_value !== '') {
 						$value = $acf_value;
 					}
@@ -245,6 +249,7 @@ class Kirki extends BaseModule
 
 				if ($value === null) {
 					$acf_options_value = get_field($field_name, 'option');
+
 					if ($acf_options_value !== false && $acf_options_value !== null && $acf_options_value !== '') {
 						$value = $acf_options_value;
 					}
@@ -256,7 +261,7 @@ class Kirki extends BaseModule
 			$value = self::get_option($key);
 		}
 
-		return apply_filters('vlt_framework/kirki/get_theme_mod', $value, $key, $use_acf, $postID, $acf_name);
+		return apply_filters('vlt_framework/kirki/get_theme_mod', $value, $key, $use_acf, $post_id, $acf_name);
 	}
 
 	/**
@@ -270,7 +275,7 @@ class Kirki extends BaseModule
 
 		$hsl = self::hex_to_hsl($color);
 
-		if (!$hsl) {
+		if (! $hsl) {
 			return '';
 		}
 
@@ -285,7 +290,7 @@ class Kirki extends BaseModule
 			$var_name,
 			$hsl['s'],
 			$var_name,
-			$hsl['l']
+			$hsl['l'],
 		);
 
 		return $css;
@@ -316,7 +321,7 @@ class Kirki extends BaseModule
 
 		$max = max($r, $g, $b);
 		$min = min($r, $g, $b);
-		$l = ($max + $min) / 2;
+		$l   = ($max + $min) / 2;
 
 		if ($max == $min) {
 			$h = $s = 0;
@@ -353,6 +358,7 @@ class Kirki extends BaseModule
 	{
 		if (function_exists('vlt_framework')) {
 			$config = vlt_framework()->get_config('customizer', []);
+
 			return $config['config_id'] ?? 'vlt_customize';
 		}
 
@@ -374,11 +380,12 @@ class Kirki extends BaseModule
 	 * Useful for retrieving select options, radio options, etc.
 	 *
 	 * @param string $setting_id The Kirki setting ID
+	 *
 	 * @return array Choices array or empty array if not found
 	 */
 	public static function get_setting_choices($setting_id)
 	{
-		if (!class_exists('Kirki')) {
+		if (! class_exists('Kirki')) {
 			return [];
 		}
 
@@ -386,8 +393,8 @@ class Kirki extends BaseModule
 		$fields = \Kirki::$all_fields ?? [];
 
 		// Search for the setting
-		if (isset($fields[$setting_id])) {
-			return $fields[$setting_id]['choices'] ?? [];
+		if (isset($fields[ $setting_id ])) {
+			return $fields[ $setting_id ]['choices'] ?? [];
 		}
 
 		return [];

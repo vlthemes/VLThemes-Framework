@@ -2,10 +2,10 @@
 
 /**
  * Framework default configuration
- * Can be overridden via 'vlt_framework_config' filter
+ * Can be overridden via 'vlt_fw_config' filter
  */
 
-if (!defined('ABSPATH')) {
+if (! defined('ABSPATH')) {
 	exit;
 }
 
@@ -13,8 +13,8 @@ return [
 	'content_width' => 1170,
 
 	'assets' => [
-		'google_fonts' => true,
-		'preload_fonts' => true,
+		'google_fonts'     => true,
+		'preload_fonts'    => true,
 		'jquery_in_footer' => true,
 	],
 
@@ -22,8 +22,8 @@ return [
 		'title-tag',
 		'post-thumbnails',
 		'automatic-feed-links',
-		'html5' => ['search-form', 'comment-form', 'comment-list', 'gallery', 'caption'],
-		'post-formats' => ['gallery', 'video', 'audio', 'quote', 'link'],
+		'html5'        => [ 'search-form', 'comment-form', 'comment-list', 'gallery', 'caption' ],
+		'post-formats' => [ 'gallery', 'video', 'audio', 'quote', 'link' ],
 	],
 
 	'nav_menus' => [
@@ -35,8 +35,8 @@ return [
 	'sidebars' => [],
 
 	'customizer' => [
-		'config_id' => 'vlt_customize',
-		'capability' => 'edit_theme_options',
+		'config_id'   => 'vlt_customize',
+		'capability'  => 'edit_theme_options',
 		'option_type' => 'theme_mod',
 	],
 

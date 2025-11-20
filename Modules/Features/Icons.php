@@ -5,7 +5,7 @@ namespace VLT\Framework\Modules\Features;
 use VLT\Framework\BaseModule;
 use VLT\Framework\Modules\Utils\Sanitize;
 
-if (!defined('ABSPATH')) {
+if (! defined('ABSPATH')) {
 	exit;
 }
 
@@ -14,13 +14,12 @@ if (!defined('ABSPATH')) {
  */
 class Icons extends BaseModule
 {
-
 	private static $icons_cache = null;
 
 	/**
 	 * Register module
 	 */
-	public function register()
+	public function register(): void
 	{
 	}
 
@@ -31,14 +30,14 @@ class Icons extends BaseModule
 	{
 		$icons = self::get_icons();
 
-		if (!isset($icons[$icon])) {
+		if (! isset($icons[ $icon ])) {
 			return '';
 		}
 
 		$class = self::sanitize_class($class);
-		$svg = $icons[$icon];
+		$svg   = $icons[ $icon ];
 
-		if (!empty($class)) {
+		if (! empty($class)) {
 			if (strpos($svg, 'class="') !== false) {
 				$svg = preg_replace('/class="([^"]*)"/', 'class="$1 ' . esc_attr($class) . '"', $svg);
 			} else {
@@ -55,7 +54,8 @@ class Icons extends BaseModule
 	public static function exists($icon)
 	{
 		$icons = self::get_icons();
-		return isset($icons[$icon]);
+
+		return isset($icons[ $icon ]);
 	}
 
 	/**
@@ -72,6 +72,7 @@ class Icons extends BaseModule
 	public static function get_names()
 	{
 		$icons = self::get_icons();
+
 		return array_keys($icons);
 	}
 
@@ -80,11 +81,11 @@ class Icons extends BaseModule
 	 */
 	private static function get_icons()
 	{
-		if (null !== self::$icons_cache) {
+		if (self::$icons_cache !== null) {
 			return self::$icons_cache;
 		}
 
-		self::$icons_cache = apply_filters('vlt_framework_icons', array());
+		self::$icons_cache = apply_filters('vlt_fw_icons', []);
 
 		return self::$icons_cache;
 	}
@@ -92,7 +93,7 @@ class Icons extends BaseModule
 	/**
 	 * Clear icons cache
 	 */
-	public static function clear_cache()
+	public static function clear_cache(): void
 	{
 		self::$icons_cache = null;
 	}

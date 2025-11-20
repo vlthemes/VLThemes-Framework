@@ -37,7 +37,7 @@ require_once get_template_directory() . '/vlthemes-framework/bootstrap.php';
 Configure the framework using the `vlt_framework_config` filter in your theme's `functions.php`:
 
 ```php
-add_filter('vlt_framework_config', function($config) {
+add_filter('vlt_fw_config', function($config) {
 
     // Content width
     $config['content_width'] = 1310;
@@ -100,21 +100,21 @@ The framework uses a modular architecture with the following module types:
 ## Helper Functions
 
 ### Image Functions
-- `vlt_get_attachment_image()` - Get attachment image HTML
-- `vlt_get_attachment_image_src()` - Get attachment image URL
+- `vlt_fw_get_attachment_image()` - Get attachment image HTML
+- `vlt_fw_get_attachment_image_src()` - Get attachment image URL
 
 ### Content Functions
-- `vlt_get_trimmed_content()` - Get trimmed content with word limit
+- `vlt_fw_get_trimmed_content()` - Get trimmed content with word limit
 
 ### Taxonomy Functions
-- `vlt_get_post_taxonomy()` - Get post taxonomy terms
+- `vlt_fw_get_post_taxonomy()` - Get post taxonomy terms
 
 ### Video Functions
-- `vlt_parse_video_id()` - Parse video ID from URL
+- `vlt_fw_parse_video_id()` - Parse video ID from URL
 
 ### Sanitization Functions
-- `vlt_string_to_bool()` - Convert string to boolean
-- `vlt_sanitize_class()` - Sanitize CSS class name
+- `vlt_fw_string_to_bool()` - Convert string to boolean
+- `vlt_fw_sanitize_class()` - Sanitize CSS class name
 
 ### Menu Functions
 - `vlt_get_nav_menu()` - Get navigation menu HTML
@@ -124,7 +124,7 @@ The framework uses a modular architecture with the following module types:
 - `vlt_print_icon()` - Print icon HTML
 
 ### Customizer Functions
-- `vlt_get_theme_mod()` - Get theme modification with fallback
+- `vlt_fw_get_theme_mod()` - Get theme modification with fallback
 
 ## Requirements
 

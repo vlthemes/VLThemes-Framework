@@ -5,14 +5,14 @@
 
 namespace VLT\Framework;
 
-if (!defined('ABSPATH')) {
+if (! defined('ABSPATH')) {
 	exit;
 }
 
 abstract class BaseModule
 {
 	protected $framework;
-	protected $name = '';
+	protected $name    = '';
 	protected $version = '1.0.0';
 	protected $enabled = true;
 
@@ -27,14 +27,14 @@ abstract class BaseModule
 	/**
 	 * Register module hooks and filters
 	 */
-	public function register()
+	public function register(): void
 	{
 	}
 
 	/**
 	 * Initialize module on 'init' hook
 	 */
-	public function init()
+	public function init(): void
 	{
 	}
 

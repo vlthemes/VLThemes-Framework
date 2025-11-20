@@ -7,6 +7,7 @@
  * These functions are loaded FIRST before any modules initialize.
  *
  * @package VLT Framework
+ *
  * @version 1.0.0
  */
 
@@ -25,16 +26,18 @@ if (! defined('ABSPATH')) {
  *
  * @param string      $key      Setting key
  * @param bool        $use_acf  Try ACF first? (default: true)
- * @param int|null    $postID   Post ID for ACF (default: current post)
+ * @param int|null    $post_id  Post ID for ACF (default: current post)
  * @param string|null $acf_name ACF field name if different from $key
+ *
  * @return mixed Theme mod value or null if not found
  */
-if (! function_exists('vlt_get_theme_mod')) {
-	function vlt_get_theme_mod($key, $use_acf = true, $postID = null, $acf_name = null)
+if (! function_exists('vlt_fw_get_theme_mod')) {
+	function vlt_fw_get_theme_mod($key, $use_acf = true, $post_id = null, $acf_name = null)
 	{
 		if (class_exists('VLT\Framework\Modules\Integrations\Kirki')) {
-			return \VLT\Framework\Modules\Integrations\Kirki::get_theme_mod($key, $use_acf, $postID, $acf_name);
+			return VLT\Framework\Modules\Integrations\Kirki::get_theme_mod($key, $use_acf, $post_id, $acf_name);
 		}
+
 		return get_theme_mod($key, null);
 	}
 }
@@ -42,14 +45,15 @@ if (! function_exists('vlt_get_theme_mod')) {
 /**
  * Get framework instance
  *
- * @return \VLT\Framework\Framework|null
+ * @return VLT\Framework\Framework|null
  */
-if (! function_exists('vlt_framework')) {
-	function vlt_framework()
+if (! function_exists('vlt_fw')) {
+	function vlt_fw()
 	{
 		if (class_exists('VLT\Framework\Framework')) {
-			return \VLT\Framework\Framework::instance();
+			return VLT\Framework\Framework::instance();
 		}
+
 		return null;
 	}
 }
@@ -58,12 +62,14 @@ if (! function_exists('vlt_framework')) {
  * Get specific framework module
  *
  * @param string $module_name Module name
+ *
  * @return object|null
  */
-if (! function_exists('vlt_get_module')) {
-	function vlt_get_module($module_name)
+if (! function_exists('vlt_fw_get_module')) {
+	function vlt_fw_get_module($module_name)
 	{
 		$framework = vlt_framework();
+
 		return $framework ? $framework->get_module($module_name) : null;
 	}
 }
@@ -72,12 +78,14 @@ if (! function_exists('vlt_get_module')) {
  * Check if framework module is loaded
  *
  * @param string $module_name Module name
+ *
  * @return bool
  */
-if (! function_exists('vlt_has_module')) {
-	function vlt_has_module($module_name)
+if (! function_exists('vlt_fw_has_module')) {
+	function vlt_fw_has_module($module_name)
 	{
 		$framework = vlt_framework();
+
 		return $framework ? $framework->has_module($module_name) : false;
 	}
 }
@@ -87,12 +95,14 @@ if (! function_exists('vlt_has_module')) {
  *
  * @param string $key     Configuration key (dot notation)
  * @param mixed  $default Default value
+ *
  * @return mixed
  */
 if (! function_exists('vlt_get_config')) {
-	function vlt_get_config($key, $default = null)
+	function vlt_fw_get_config($key, $default = null)
 	{
 		$framework = vlt_framework();
+
 		return $framework ? $framework->get_config($key, $default) : $default;
 	}
 }
@@ -107,14 +117,16 @@ if (! function_exists('vlt_get_config')) {
  *
  * @param string $var_name CSS variable name (without --)
  * @param string $color    Color value (hex format: #fff or #ffffff)
+ *
  * @return string CSS variables string or empty string on failure
  */
-if (! function_exists('vlt_get_hsl_variables')) {
-	function vlt_get_hsl_variables($var_name, $color)
+if (! function_exists('vlt_fw_get_hsl_variables')) {
+	function vlt_fw_get_hsl_variables($var_name, $color)
 	{
 		if (class_exists('VLT\Framework\Modules\Integrations\Kirki')) {
-			return \VLT\Framework\Modules\Integrations\Kirki::get_hsl_variables($var_name, $color);
+			return VLT\Framework\Modules\Integrations\Kirki::get_hsl_variables($var_name, $color);
 		}
+
 		return '';
 	}
 }
@@ -127,18 +139,19 @@ if (! function_exists('vlt_get_hsl_variables')) {
  *
  * Wrapper for Image::get_attachment_image() static method
  *
- * @param int          $image_id       Image attachment ID
- * @param string       $image_size_key Image size key (or 'custom')
- * @param string       $class          Additional CSS classes
- * @param string       $image_key      Image key for custom dimensions (optional)
- * @param array        $settings       Settings array with custom dimensions (optional)
+ * @param int    $image_id       Image attachment ID
+ * @param string $image_size_key Image size key (or 'custom')
+ * @param string $class          Additional CSS classes
+ * @param string $image_key      Image key for custom dimensions (optional)
+ * @param array  $settings       Settings array with custom dimensions (optional)
+ *
  * @return string|false HTML img element or false on failure
  */
-if (! function_exists('vlt_get_attachment_image')) {
-	function vlt_get_attachment_image($image_id, $image_size_key = 'full', $class = '', $image_key = '', $settings = [])
+if (! function_exists('vlt_fw_get_attachment_image')) {
+	function vlt_fw_get_attachment_image($image_id, $image_size_key = 'full', $class = '', $image_key = '', $settings = [])
 	{
 		if (class_exists('VLT\Framework\Modules\Utils\Helpers')) {
-			return \VLT\Framework\Modules\Utils\Helpers::get_attachment_image($image_id, $image_size_key, $class, $image_key, $settings);
+			return VLT\Framework\Modules\Utils\Helpers::get_attachment_image($image_id, $image_size_key, $class, $image_key, $settings);
 		}
 
 		// Fallback: basic implementation via wp_get_attachment_image
@@ -146,7 +159,8 @@ if (! function_exists('vlt_get_attachment_image')) {
 			return false;
 		}
 
-		$attrs = ['loading' => 'lazy'];
+		$attrs = [ 'loading' => 'lazy' ];
+
 		if (! empty($class)) {
 			$attrs['class'] = trim($class);
 		}
@@ -166,13 +180,14 @@ if (! function_exists('vlt_get_attachment_image')) {
  * @param string|array $image_size_key Image size key, array [w, h, crop], or 'custom'
  * @param string       $image_key      Image key for custom dimensions (used with 'custom')
  * @param array        $settings       Settings array with custom dimensions
+ *
  * @return string|false Image URL or false if not found
  */
-if (! function_exists('vlt_get_attachment_image_src')) {
-	function vlt_get_attachment_image_src($image_id, $image_size_key = 'full', string $image_key = '', array $settings = [])
+if (! function_exists('vlt_fw_get_attachment_image_src')) {
+	function vlt_fw_get_attachment_image_src($image_id, $image_size_key = 'full', string $image_key = '', array $settings = [])
 	{
 		if (class_exists('VLT\Framework\Modules\Utils\Helpers')) {
-			return \VLT\Framework\Modules\Utils\Helpers::get_attachment_image_src($image_id, $image_size_key, $image_key, $settings);
+			return VLT\Framework\Modules\Utils\Helpers::get_attachment_image_src($image_id, $image_size_key, $image_key, $settings);
 		}
 
 		// Fallback: basic implementation
@@ -199,14 +214,16 @@ if (! function_exists('vlt_get_attachment_image_src')) {
  * Wrapper for Sanitize::string_to_bool() static method
  *
  * @param mixed $value Value to convert (string, int, bool)
+ *
  * @return bool Boolean value
  */
-if (! function_exists('vlt_string_to_bool')) {
-	function vlt_string_to_bool($value)
+if (! function_exists('vlt_fw_string_to_bool')) {
+	function vlt_fw_string_to_bool($value)
 	{
 		if (class_exists('VLT\Framework\Modules\Utils\Sanitize')) {
-			return \VLT\Framework\Modules\Utils\Sanitize::string_to_bool($value);
+			return VLT\Framework\Modules\Utils\Sanitize::string_to_bool($value);
 		}
+
 		return (bool) $value;
 	}
 }
@@ -220,14 +237,16 @@ if (! function_exists('vlt_string_to_bool')) {
  * Wrapper for Sanitize::sanitize_class() static method
  *
  * @param string $class CSS class name(s), space-separated
+ *
  * @return string Sanitized CSS class name(s)
  */
-if (! function_exists('vlt_sanitize_class')) {
-	function vlt_sanitize_class($class)
+if (! function_exists('vlt_fw_sanitize_class')) {
+	function vlt_fw_sanitize_class($class)
 	{
 		if (class_exists('VLT\Framework\Modules\Utils\Sanitize')) {
-			return \VLT\Framework\Modules\Utils\Sanitize::sanitize_class($class);
+			return VLT\Framework\Modules\Utils\Sanitize::sanitize_class($class);
 		}
+
 		return sanitize_html_class($class);
 	}
 }
@@ -241,14 +260,16 @@ if (! function_exists('vlt_sanitize_class')) {
  * Wrapper for Sanitize::style() static method
  *
  * @param string $style Inline CSS style string
+ *
  * @return string Sanitized CSS style string
  */
-if (! function_exists('vlt_sanitize_style')) {
-	function vlt_sanitize_style($style)
+if (! function_exists('vlt_fw_sanitize_style')) {
+	function vlt_fw_sanitize_style($style)
 	{
 		if (class_exists('VLT\Framework\Modules\Utils\Sanitize')) {
-			return \VLT\Framework\Modules\Utils\Sanitize::style($style);
+			return VLT\Framework\Modules\Utils\Sanitize::style($style);
 		}
+
 		return wp_strip_all_tags($style);
 	}
 }
@@ -263,8 +284,8 @@ if (! function_exists('vlt_sanitize_style')) {
  *
  * @return void
  */
-if (! function_exists('vlt_body_open')) {
-	function vlt_body_open()
+if (! function_exists('vlt_fw_body_open')) {
+	function vlt_fw_body_open(): void
 	{
 		if (function_exists('wp_body_open')) {
 			wp_body_open();
@@ -273,7 +294,7 @@ if (! function_exists('vlt_body_open')) {
 		}
 
 		// Framework-specific action for additional body open hooks
-		do_action('vlt_framework_body_open');
+		do_action('vlt_fw_body_open');
 	}
 }
 
@@ -285,14 +306,16 @@ if (! function_exists('vlt_body_open')) {
  *
  * @param string $location Menu location slug
  * @param array  $args     Optional. wp_nav_menu arguments array
+ *
  * @return void|false False if menu doesn't exist, void otherwise
  */
-if (! function_exists('vlt_display_menu')) {
-	function vlt_display_menu($location, $args = [])
+if (! function_exists('vlt_fw_display_menu')) {
+	function vlt_fw_display_menu($location, $args = [])
 	{
 		if (class_exists('VLT\Framework\Modules\Core\Menus')) {
-			return \VLT\Framework\Modules\Core\Menus::display_menu($location, $args);
+			return VLT\Framework\Modules\Core\Menus::display_menu($location, $args);
 		}
+
 		return false;
 	}
 }
@@ -303,14 +326,16 @@ if (! function_exists('vlt_display_menu')) {
  * Wrapper for Menus::has_menu() static method.
  *
  * @param string $location Menu location
+ *
  * @return bool
  */
-if (! function_exists('vlt_has_menu')) {
-	function vlt_has_menu($location)
+if (! function_exists('vlt_fw_has_menu')) {
+	function vlt_fw_has_menu($location)
 	{
 		if (class_exists('VLT\Framework\Modules\Core\Menus')) {
-			return \VLT\Framework\Modules\Core\Menus::has_menu($location);
+			return VLT\Framework\Modules\Core\Menus::has_menu($location);
 		}
+
 		return false;
 	}
 }
@@ -319,18 +344,19 @@ if (! function_exists('vlt_has_menu')) {
  * Get navigation breakpoint for responsive menu
  *
  * Returns the screen size breakpoint at which mobile menu activates.
- * Filterable via 'vlt_framework_nav_breakpoint' filter.
+ * Filterable via 'vlt_fw_nav_breakpoint' filter.
  *
  * Wrapper for Menus::get_nav_breakpoint() static method
  *
  * @return string Breakpoint size identifier (xs, sm, md, lg, xl), default: 'xl'
  */
-if (! function_exists('vlt_nav_breakpoint')) {
-	function vlt_nav_breakpoint()
+if (! function_exists('vlt_fw_nav_breakpoint')) {
+	function vlt_fw_nav_breakpoint()
 	{
 		if (class_exists('VLT\Framework\Modules\Core\Menus')) {
-			return \VLT\Framework\Modules\Core\Menus::get_nav_breakpoint();
+			return VLT\Framework\Modules\Core\Menus::get_nav_breakpoint();
 		}
+
 		return 'xl';
 	}
 }
@@ -339,20 +365,22 @@ if (! function_exists('vlt_nav_breakpoint')) {
  * Get SVG icon markup
  *
  * Retrieves SVG icon from framework icon registry.
- * Icons are registered via 'vlt_framework_icons' filter.
+ * Icons are registered via 'vlt_fw_icons' filter.
  *
  * Wrapper for Icons::get() static method
  *
  * @param string $icon  Icon name/slug
  * @param string $class Additional CSS class to add to SVG element
+ *
  * @return string SVG markup or empty string if icon not found
  */
-if (! function_exists('vlt_get_svg_icon')) {
-	function vlt_get_svg_icon($icon, $class = '')
+if (! function_exists('vlt_fw_get_svg_icon')) {
+	function vlt_fw_get_svg_icon($icon, $class = '')
 	{
 		if (class_exists('VLT\Framework\Modules\Features\Icons')) {
-			return \VLT\Framework\Modules\Features\Icons::get($icon, $class);
+			return VLT\Framework\Modules\Features\Icons::get($icon, $class);
 		}
+
 		return '';
 	}
 }
@@ -366,14 +394,16 @@ if (! function_exists('vlt_get_svg_icon')) {
  * Wrapper for Helpers::parse_video_id() static method
  *
  * @param string $url Video URL (YouTube, Vimeo, etc.)
+ *
  * @return array|string Video data array or empty string on failure
  */
-if (! function_exists('vlt_parse_video_id')) {
-	function vlt_parse_video_id($url)
+if (! function_exists('vlt_fw_parse_video_id')) {
+	function vlt_fw_parse_video_id($url)
 	{
 		if (class_exists('VLT\Framework\Modules\Utils\Helpers')) {
-			return \VLT\Framework\Modules\Utils\Helpers::parse_video_id($url);
+			return VLT\Framework\Modules\Utils\Helpers::parse_video_id($url);
 		}
+
 		return '';
 	}
 }
@@ -386,19 +416,21 @@ if (! function_exists('vlt_parse_video_id')) {
  *
  * Wrapper for Helpers::get_post_taxonomy() static method
  *
- * @param int    $postID    Post ID
+ * @param int    $post_id   Post ID
  * @param string $taxonomy  Taxonomy name (category, post_tag, custom taxonomy)
  * @param string $delimiter Separator between terms, default: ', '
  * @param string $get       Term property to get: 'name', 'slug', 'id', default: 'name'
  * @param bool   $link      Whether to wrap terms in links, default: true
+ *
  * @return string Formatted taxonomy terms string or empty string
  */
-if (! function_exists('vlt_get_post_taxonomy')) {
-	function vlt_get_post_taxonomy($postID, $taxonomy, $delimiter = ', ', $get = 'name', $link = true)
+if (! function_exists('vlt_fw_get_post_taxonomy')) {
+	function vlt_fw_get_post_taxonomy($post_id, $taxonomy, $delimiter = ', ', $get = 'name', $link = true)
 	{
 		if (class_exists('VLT\Framework\Modules\Utils\Helpers')) {
-			return \VLT\Framework\Modules\Utils\Helpers::get_post_taxonomy($postID, $taxonomy, $delimiter, $get, $link);
+			return VLT\Framework\Modules\Utils\Helpers::get_post_taxonomy($post_id, $taxonomy, $delimiter, $get, $link);
 		}
+
 		return '';
 	}
 }
@@ -413,14 +445,16 @@ if (! function_exists('vlt_get_post_taxonomy')) {
  *
  * @param int|null $post_id   Post ID, null for current post
  * @param int      $max_words Maximum number of words, default: 18
+ *
  * @return string Trimmed content with ellipsis or empty string
  */
-if (! function_exists('vlt_get_trimmed_content')) {
-	function vlt_get_trimmed_content($post_id = null, $max_words = 18)
+if (! function_exists('vlt_fw_get_trimmed_content')) {
+	function vlt_fw_get_trimmed_content($post_id = null, $max_words = 18)
 	{
 		if (class_exists('VLT\Framework\Modules\Utils\Helpers')) {
-			return \VLT\Framework\Modules\Utils\Helpers::get_trimmed_content($post_id, $max_words);
+			return VLT\Framework\Modules\Utils\Helpers::get_trimmed_content($post_id, $max_words);
 		}
+
 		return '';
 	}
 }
@@ -431,27 +465,28 @@ if (! function_exists('vlt_get_trimmed_content')) {
  * Enhanced wrapper for ACF get_field() with exception handling.
  * Returns null if ACF is not active or field doesn't exist.
  *
- * @param string     $field_name   ACF field name
- * @param int|false  $postID       Post ID or false for current post, default: false (current post)
- * @param bool       $format_value Whether to apply ACF formatting, default: true
+ * @param string    $field_name   ACF field name
+ * @param int|false $post_id      Post ID or false for current post, default: false (current post)
+ * @param bool      $format_value Whether to apply ACF formatting, default: true
+ *
  * @return mixed Field value, or null if not found or ACF not active
  */
-if (! function_exists('vlt_get_field')) {
-	function vlt_get_field($field_name, $postID = false, $format_value = true)
+if (! function_exists('vlt_fw_get_field')) {
+	function vlt_fw_get_field($field_name, $post_id = false, $format_value = true)
 	{
 
 		if ($field_name === null || ! function_exists('get_field')) {
 			return null;
 		}
 
-		if ($postID === null) {
-			$postID = get_the_ID();
+		if ($post_id === null) {
+			$post_id = get_the_ID();
 		}
 
 		$value = null;
 
 		try {
-			$value = get_field($field_name, $postID, $format_value);
+			$value = get_field($field_name, $post_id, $format_value);
 		} catch (Exception $e) {
 			$value = null;
 		}
@@ -463,12 +498,13 @@ if (! function_exists('vlt_get_field')) {
 /**
  * Get placeholder image source URL
  */
-if (! function_exists('vlt_get_placeholder_image_src')) {
-	function vlt_get_placeholder_image_src()
+if (! function_exists('vlt_fw_get_placeholder_image_src')) {
+	function vlt_fw_get_placeholder_image_src()
 	{
 		if (class_exists('\VLT\Framework\Modules\Utils\Helpers')) {
-			return \VLT\Framework\Modules\Utils\Helpers::get_placeholder_image_src();
+			return VLT\Framework\Modules\Utils\Helpers::get_placeholder_image_src();
 		}
+
 		return '';
 	}
 }
@@ -476,12 +512,13 @@ if (! function_exists('vlt_get_placeholder_image_src')) {
 /**
  * Get placeholder image HTML
  */
-if (! function_exists('vlt_get_placeholder_image')) {
-	function vlt_get_placeholder_image($class = '', $alt = '')
+if (! function_exists('vlt_fw_get_placeholder_image')) {
+	function vlt_fw_get_placeholder_image($class = '', $alt = '')
 	{
 		if (class_exists('\VLT\Framework\Modules\Utils\Helpers')) {
-			return \VLT\Framework\Modules\Utils\Helpers::get_placeholder_image($class, $alt);
+			return VLT\Framework\Modules\Utils\Helpers::get_placeholder_image($class, $alt);
 		}
+
 		return '';
 	}
 }
@@ -497,14 +534,16 @@ if (! function_exists('vlt_get_placeholder_image')) {
  * - {{ADMIN_EMAIL}} - Administrator email
  *
  * @param string $text Text containing dynamic variables
+ *
  * @return string Parsed text with replaced variables
  */
-if (! function_exists('vlt_parse_dynamic_content')) {
-	function vlt_parse_dynamic_content($text)
+if (! function_exists('vlt_fw_parse_dynamic_content')) {
+	function vlt_fw_parse_dynamic_content($text)
 	{
 		if (class_exists('\VLT\Framework\Modules\Utils\Helpers')) {
-			return \VLT\Framework\Modules\Utils\Helpers::parse_dynamic_content($text);
+			return VLT\Framework\Modules\Utils\Helpers::parse_dynamic_content($text);
 		}
+
 		return $text;
 	}
 }
@@ -516,14 +555,16 @@ if (! function_exists('vlt_parse_dynamic_content')) {
  * Useful for retrieving select options, radio options, etc.
  *
  * @param string $setting_id The Kirki setting ID
+ *
  * @return array Choices array or empty array if not found
  */
-if (! function_exists('vlt_get_setting_choices')) {
-	function vlt_get_setting_choices($setting_id)
+if (! function_exists('vlt_fw_get_setting_choices')) {
+	function vlt_fw_get_setting_choices($setting_id)
 	{
 		if (class_exists('\VLT\Framework\Modules\Integrations\Kirki')) {
-			return \VLT\Framework\Modules\Integrations\Kirki::get_setting_choices($setting_id);
+			return VLT\Framework\Modules\Integrations\Kirki::get_setting_choices($setting_id);
 		}
+
 		return [];
 	}
 }

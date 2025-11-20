@@ -13,17 +13,16 @@ if (! defined('ABSPATH')) {
  */
 class BodyClass extends BaseModule
 {
-
-	protected $name = 'body_class';
+	protected $name    = 'body_class';
 	protected $version = '1.0.0';
 
 	/**
 	 * Register module
 	 */
-	public function register()
+	public function register(): void
 	{
-		add_filter('body_class', [$this, 'add_body_classes'], 10);
-		add_filter('body_class', [$this, 'add_theme_version_classes'], 11);
+		add_filter('body_class', [ $this, 'add_body_classes' ], 10);
+		add_filter('body_class', [ $this, 'add_theme_version_classes' ], 11);
 	}
 
 	/**
@@ -37,7 +36,7 @@ class BodyClass extends BaseModule
 			$classes[] = 'is-mobile';
 		}
 
-		$classes = apply_filters('vlt_framework_body_class', $classes);
+		$classes = apply_filters('vlt_fw_body_class', $classes);
 
 		return $classes;
 	}
@@ -48,7 +47,7 @@ class BodyClass extends BaseModule
 	public function add_theme_version_classes($classes)
 	{
 		$current_theme = wp_get_theme();
-		$theme_prefix = 'vlt';
+		$theme_prefix  = 'vlt';
 
 		if (! $current_theme->exists()) {
 			return $classes;
@@ -56,6 +55,7 @@ class BodyClass extends BaseModule
 
 		if ($current_theme->parent()) {
 			$child_version = $current_theme->get('Version');
+
 			if (! empty($child_version)) {
 				$classes[] = $theme_prefix . '-child-theme-version-' . $this->sanitize_version($child_version);
 			}
@@ -64,7 +64,7 @@ class BodyClass extends BaseModule
 
 		if ($current_theme->exists()) {
 			$theme_version = $current_theme->get('Version');
-			$theme_name = $current_theme->get('Name');
+			$theme_name    = $current_theme->get('Name');
 
 			if (! empty($theme_version)) {
 				$classes[] = $theme_prefix . '-theme-version-' . $this->sanitize_version($theme_version);
@@ -85,6 +85,7 @@ class BodyClass extends BaseModule
 	{
 		$version = preg_replace('/[^a-zA-Z0-9.-]/', '', $version);
 		$version = str_replace('.', '-', $version);
+
 		return sanitize_html_class($version);
 	}
 }

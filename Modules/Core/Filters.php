@@ -13,23 +13,22 @@ if (! defined('ABSPATH')) {
  */
 class Filters extends BaseModule
 {
-
-	protected $name = 'filters';
+	protected $name    = 'filters';
 	protected $version = '1.0.0';
 
 	/**
 	 * Register module
 	 */
-	public function register()
+	public function register(): void
 	{
-		add_filter('login_headerurl', [$this, 'change_admin_logo_link']);
+		add_filter('login_headerurl', [ $this, 'change_admin_logo_link' ]);
 		add_filter('comment_form_logged_in', '__return_empty_string');
-		add_filter('cancel_comment_reply_link', [$this, 'add_tooltip_to_cancel_reply']);
+		add_filter('cancel_comment_reply_link', [ $this, 'add_tooltip_to_cancel_reply' ]);
 		add_filter('big_image_size_threshold', '__return_false');
-		add_filter('excerpt_more', [$this, 'excerpt_more']);
-		add_filter('excerpt_length', [$this, 'excerpt_length']);
+		add_filter('excerpt_more', [ $this, 'excerpt_more' ]);
+		add_filter('excerpt_length', [ $this, 'excerpt_length' ]);
 
-		do_action('vlt_framework_filters_init');
+		do_action('vlt_fw_filters_init');
 	}
 
 	/**
@@ -43,13 +42,15 @@ class Filters extends BaseModule
 	public function excerpt_more($more)
 	{
 		$more = '...';
-		return apply_filters('vlt_framework_excerpt_more', $more);
+
+		return apply_filters('vlt_fw_excerpt_more', $more);
 	}
 
 	public function excerpt_length($length)
 	{
 		$length = 55;
-		return apply_filters('vlt_framework_excerpt_length', $length);
+
+		return apply_filters('vlt_fw_excerpt_length', $length);
 	}
 
 	/**
@@ -60,7 +61,7 @@ class Filters extends BaseModule
 		return str_replace(
 			'<a ',
 			'<a data-tooltip="' . esc_attr__('Cancel', '@@textdomain') . '" ',
-			$link
+			$link,
 		);
 	}
 }

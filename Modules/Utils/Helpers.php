@@ -4,7 +4,7 @@ namespace VLT\Framework\Modules\Utils;
 
 use VLT\Framework\BaseModule;
 
-if (!defined('ABSPATH')) {
+if (! defined('ABSPATH')) {
 	exit;
 }
 
@@ -13,19 +13,18 @@ if (!defined('ABSPATH')) {
  */
 class Helpers extends BaseModule
 {
-
-	protected $name = 'helpers';
+	protected $name    = 'helpers';
 	protected $version = '1.0.0';
 
 	/**
 	 * Register module
 	 */
-	public function register()
+	public function register(): void
 	{
 		// Apply dynamic content parsing to WordPress content
-		add_filter('the_content', [__CLASS__, 'parse_dynamic_content'], 999);
-		add_filter('the_excerpt', [__CLASS__, 'parse_dynamic_content'], 999);
-		add_filter('widget_text', [__CLASS__, 'parse_dynamic_content'], 999);
+		add_filter('the_content', [ __CLASS__, 'parse_dynamic_content' ], 999);
+		add_filter('the_excerpt', [ __CLASS__, 'parse_dynamic_content' ], 999);
+		add_filter('widget_text', [ __CLASS__, 'parse_dynamic_content' ], 999);
 	}
 
 	/**
@@ -37,8 +36,8 @@ class Helpers extends BaseModule
 			$max_words = 18;
 		}
 
-		$postID = $post_id ?: get_the_ID();
-		$post    = get_post($postID);
+		$post_id = $post_id ?: get_the_ID();
+		$post    = get_post($post_id);
 
 		if (! $post) {
 			return '';
@@ -63,6 +62,7 @@ class Helpers extends BaseModule
 		$content = trim($content);
 
 		$words = explode(' ', $content, $max_words + 1);
+
 		if (count($words) > $max_words) {
 			array_pop($words);
 			$words[] = '...';
@@ -72,7 +72,7 @@ class Helpers extends BaseModule
 		$content = self::parse_dynamic_content($content);
 		$content = esc_html($content);
 
-		return apply_filters('vlt_framework_trimmed_content', $content, $max_words);
+		return apply_filters('vlt_fw_trimmed_content', $content, $max_words);
 	}
 
 	/**
@@ -87,15 +87,15 @@ class Helpers extends BaseModule
 		$size = $image_size_key;
 
 		// Handle custom size
-		if ('custom' === $image_size_key && ! empty($image_key)) {
+		if ($image_size_key === 'custom' && ! empty($image_key)) {
 			$custom_key = $image_key . '_custom_dimension';
-			$dim        = $settings[$custom_key] ?? [];
+			$dim        = $settings[ $custom_key ] ?? [];
 
 			$w = ! empty($dim['width']) && is_numeric($dim['width']) ? (int) $dim['width'] : null;
 			$h = ! empty($dim['height']) && is_numeric($dim['height']) ? (int) $dim['height'] : null;
 
 			if ($w || $h) {
-				$size = [$w ?? 0, $h ?? 0, true];
+				$size = [ $w ?? 0, $h ?? 0, true ];
 			} else {
 				$size = 'full';
 			}
@@ -111,7 +111,7 @@ class Helpers extends BaseModule
 
 		$output = wp_get_attachment_image($image_id, $size, false, $attrs);
 
-		return apply_filters('vlt_framework_attachment_image', $output, $image_id, $size, $class, $settings);
+		return apply_filters('vlt_fw_attachment_image', $output, $image_id, $size, $class, $settings);
 	}
 
 	/**
@@ -125,15 +125,15 @@ class Helpers extends BaseModule
 
 		$size = $image_size_key;
 
-		if ('custom' === $image_size_key && !empty($image_key)) {
+		if ($image_size_key === 'custom' && ! empty($image_key)) {
 			$custom_key = $image_key . '_custom_dimension';
-			$dim = $settings[$custom_key] ?? [];
+			$dim        = $settings[ $custom_key ] ?? [];
 
-			$w = !empty($dim['width']) && is_numeric($dim['width']) ? (int) $dim['width'] : null;
-			$h = !empty($dim['height']) && is_numeric($dim['height']) ? (int) $dim['height'] : null;
+			$w = ! empty($dim['width']) && is_numeric($dim['width']) ? (int) $dim['width'] : null;
+			$h = ! empty($dim['height']) && is_numeric($dim['height']) ? (int) $dim['height'] : null;
 
 			if ($w || $h) {
-				$size = [$w ?? 0, $h ?? 0, true];
+				$size = [ $w ?? 0, $h ?? 0, true ];
 			} else {
 				$size = 'full';
 			}
@@ -143,21 +143,21 @@ class Helpers extends BaseModule
 
 		$image_src = wp_get_attachment_image_src($image_id, $size);
 
-		if (!$image_src) {
+		if (! $image_src) {
 			return false;
 		}
 
 		$output = $image_src[0];
 
-		return apply_filters('vlt_framework_attachment_image_src', $output, $image_id, $size, $settings);
+		return apply_filters('vlt_fw_attachment_image_src', $output, $image_id, $size, $settings);
 	}
 
 	/**
 	 * Get post taxonomy terms
 	 */
-	public static function get_post_taxonomy($postID, $taxonomy, $delimiter = ', ', $get = 'name', $link = true)
+	public static function get_post_taxonomy($post_id, $taxonomy, $delimiter = ', ', $get = 'name', $link = true)
 	{
-		$tags = wp_get_post_terms($postID, $taxonomy);
+		$tags = wp_get_post_terms($post_id, $taxonomy);
 
 		if (empty($tags) || is_wp_error($tags)) {
 			return '';
@@ -168,6 +168,7 @@ class Helpers extends BaseModule
 		foreach ($tags as $tag) {
 			if ($link) {
 				$term_link = get_term_link($tag->term_id, $taxonomy);
+
 				if (! is_wp_error($term_link)) {
 					$list[] = '<a href="' . esc_url($term_link) . '">' . esc_html($tag->$get) . '</a>';
 				}
@@ -178,7 +179,7 @@ class Helpers extends BaseModule
 
 		$output = implode($delimiter, $list);
 
-		return apply_filters('vlt_framework_post_taxonomy', $output, $postID, $taxonomy, $delimiter, $get, $link);
+		return apply_filters('vlt_fw_post_taxonomy', $output, $post_id, $taxonomy, $delimiter, $get, $link);
 	}
 
 	/**
@@ -194,12 +195,12 @@ class Helpers extends BaseModule
 		}
 
 		// Fallback to local placeholder image
-		if (empty($default_url) && defined('VLT_FRAMEWORK_URL')) {
-			$default_url = VLT_FRAMEWORK_URL . 'includes/img/placeholder.png';
+		if (empty($default_url) && defined('VLT_FW_URL')) {
+			$default_url = VLT_FW_URL . 'includes/img/placeholder.png';
 		}
 
 		// Allow filtering of placeholder image URL
-		return apply_filters('vlt_framework_placeholder_image_src', $default_url);
+		return apply_filters('vlt_fw_placeholder_image_src', $default_url);
 	}
 
 	/**
@@ -214,12 +215,12 @@ class Helpers extends BaseModule
 		}
 
 		$attrs = [
-			'src' => esc_url($image_src),
-			'alt' => esc_attr($alt ?: __('Placeholder', 'vlthemes-framework')),
-			'loading' => 'lazy'
+			'src'     => esc_url($image_src),
+			'alt'     => esc_attr($alt ?: __('Placeholder', 'vlthemes-framework')),
+			'loading' => 'lazy',
 		];
 
-		if (!empty($class)) {
+		if (! empty($class)) {
 			$attrs['class'] = trim($class);
 		}
 
@@ -230,7 +231,7 @@ class Helpers extends BaseModule
 
 		$output = sprintf('<img%s />', $attrs_string);
 
-		return apply_filters('vlt_framework_placeholder_image', $output, $image_src, $class, $alt);
+		return apply_filters('vlt_fw_placeholder_image', $output, $image_src, $class, $alt);
 	}
 
 	/**
@@ -239,7 +240,7 @@ class Helpers extends BaseModule
 	public static function parse_video_id($url)
 	{
 		if (empty($url) || ! is_string($url)) {
-			return ['custom', ''];
+			return [ 'custom', '' ];
 		}
 
 		$vendors = [
@@ -258,17 +259,18 @@ class Helpers extends BaseModule
 		foreach ($vendors as $vendor) {
 			$video_id = false;
 
-			if (preg_match($vendor['pattern'], $url, $matches) && isset($matches[$vendor['patternIndex']])) {
-				$video_id = $matches[$vendor['patternIndex']];
+			if (preg_match($vendor['pattern'], $url, $matches) && isset($matches[ $vendor['patternIndex'] ])) {
+				$video_id = $matches[ $vendor['patternIndex'] ];
 			}
 
 			if ($video_id) {
-				$data = [$vendor['vendor'], $video_id];
-				return apply_filters('vlt_framework_video_id', $data, $url);
+				$data = [ $vendor['vendor'], $video_id ];
+
+				return apply_filters('vlt_fw_video_id', $data, $url);
 			}
 		}
 
-		return apply_filters('vlt_framework_video_id', ['custom', esc_url_raw($url)], $url);
+		return apply_filters('vlt_fw_video_id', [ 'custom', esc_url_raw($url) ], $url);
 	}
 
 	/**
@@ -282,17 +284,18 @@ class Helpers extends BaseModule
 	 * - {{ADMIN_EMAIL}} - Administrator email
 	 *
 	 * @param string $text Text containing dynamic variables
+	 *
 	 * @return string Parsed text with replaced variables
 	 */
 	public static function parse_dynamic_content($text)
 	{
-		if (empty($text) || !is_string($text)) {
+		if (empty($text) || ! is_string($text)) {
 			return $text;
 		}
 
 		// Prepare replacements array
-		$theme = wp_get_theme();
-		$replacements = array(
+		$theme        = wp_get_theme();
+		$replacements = [
 			'{{YEAR}}'         => date('Y'),
 			'{{SITE_TITLE}}'   => get_bloginfo('name'),
 			'{{SITE_URL}}'     => home_url('/'),
@@ -302,10 +305,10 @@ class Helpers extends BaseModule
 			'{{SITE_TAGLINE}}' => get_bloginfo('description'),
 			'{{PAGE_ID}}'      => get_the_ID(),
 			'{{THEME_NAME}}'   => $theme->get('Name'),
-		);
+		];
 
 		// Allow themes/plugins to add custom dynamic variables
-		$replacements = apply_filters('vlt_framework_dynamic_content_vars', $replacements);
+		$replacements = apply_filters('vlt_fw_dynamic_content_vars', $replacements);
 
 		// Perform replacements
 		$text = str_replace(array_keys($replacements), array_values($replacements), $text);

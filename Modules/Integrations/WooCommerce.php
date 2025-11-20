@@ -4,7 +4,7 @@ namespace VLT\Framework\Modules\Integrations;
 
 use VLT\Framework\BaseModule;
 
-if (!defined('ABSPATH')) {
+if (! defined('ABSPATH')) {
 	exit;
 }
 
@@ -13,36 +13,37 @@ if (!defined('ABSPATH')) {
  */
 class WooCommerce extends BaseModule
 {
-
-	protected $name = 'woocommerce';
+	protected $name    = 'woocommerce';
 	protected $version = '1.0.0';
 
 	/**
 	 * Register module
 	 */
-	public function register()
+	public function register(): void
 	{
 		// Only proceed if WooCommerce is active
-		if (!class_exists('WooCommerce')) {
+		if (! class_exists('WooCommerce')) {
 			return;
 		}
 
-		add_action('after_setup_theme', [$this, 'setup_woocommerce_support'], 10);
-		add_action('after_setup_theme', [$this, 'apply_image_sizes'], 99);
+		add_action('after_setup_theme', [ $this, 'setup_woocommerce_support' ], 10);
+		add_action('after_setup_theme', [ $this, 'apply_image_sizes' ], 99);
 	}
 
 	/**
 	 * Initialize module
 	 */
-	public function init() {}
+	public function init(): void
+	{
+	}
 
 	/**
 	 * Setup WooCommerce theme support
 	 */
-	public function setup_woocommerce_support()
+	public function setup_woocommerce_support(): void
 	{
-		$config = $this->get_config('woocommerce', []);
-		$supports = $config['support'] ?? ['woocommerce'];
+		$config   = $this->get_config('woocommerce', []);
+		$supports = $config['support'] ?? [ 'woocommerce' ];
 
 		if (empty($supports)) {
 			return;
@@ -56,7 +57,7 @@ class WooCommerce extends BaseModule
 	/**
 	 * Apply WooCommerce image sizes from theme config
 	 */
-	public function apply_image_sizes()
+	public function apply_image_sizes(): void
 	{
 		$config = $this->get_config('woocommerce', []);
 

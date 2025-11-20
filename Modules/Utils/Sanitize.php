@@ -4,7 +4,7 @@ namespace VLT\Framework\Modules\Utils;
 
 use VLT\Framework\BaseModule;
 
-if (!defined('ABSPATH')) {
+if (! defined('ABSPATH')) {
 	exit;
 }
 
@@ -13,14 +13,13 @@ if (!defined('ABSPATH')) {
  */
 class Sanitize extends BaseModule
 {
-
-	protected $name = 'sanitize';
+	protected $name    = 'sanitize';
 	protected $version = '1.0.0';
 
 	/**
 	 * Register module
 	 */
-	public function register()
+	public function register(): void
 	{
 	}
 
@@ -30,20 +29,21 @@ class Sanitize extends BaseModule
 	public static function sanitize_class($class, $fallback = null)
 	{
 		if (empty($class)) {
-			return !empty($fallback) ? sanitize_html_class($fallback) : '';
+			return ! empty($fallback) ? sanitize_html_class($fallback) : '';
 		}
 
 		if (is_string($class)) {
 			$class = explode(' ', trim($class));
 		}
 
-		if (is_array($class) && !empty($class)) {
+		if (is_array($class) && ! empty($class)) {
 			$class = array_map('sanitize_html_class', $class);
 			$class = array_filter($class);
+
 			return implode(' ', $class);
 		}
 
-		return !empty($class) ? sanitize_html_class($class, $fallback) : '';
+		return ! empty($class) ? sanitize_html_class($class, $fallback) : '';
 	}
 
 	/**
@@ -110,6 +110,6 @@ class Sanitize extends BaseModule
 
 		$value = strtolower(trim((string) $value));
 
-		return in_array($value, ['1', 'true', 'show', 'enable', 'yes', 'on', 'active'], true);
+		return in_array($value, [ '1', 'true', 'show', 'enable', 'yes', 'on', 'active' ], true);
 	}
 }
