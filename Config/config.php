@@ -4,8 +4,7 @@
  * Framework default configuration
  * Can be overridden via 'vlt_fw_config' filter
  */
-
-if (! defined('ABSPATH')) {
+if ( !defined( 'ABSPATH' ) ) {
 	exit;
 }
 
@@ -15,7 +14,7 @@ return [
 	'assets' => [
 		'google_fonts'     => true,
 		'preload_fonts'    => true,
-		'jquery_in_footer' => true,
+		'jquery_in_footer' => true
 	],
 
 	'theme_support' => [
@@ -23,11 +22,11 @@ return [
 		'post-thumbnails',
 		'automatic-feed-links',
 		'html5'        => [ 'search-form', 'comment-form', 'comment-list', 'gallery', 'caption' ],
-		'post-formats' => [ 'gallery', 'video', 'audio', 'quote', 'link' ],
+		'post-formats' => [ 'gallery', 'video', 'audio', 'quote', 'link' ]
 	],
 
 	'nav_menus' => [
-		'primary-menu' => 'Primary Menu',
+		'primary-menu' => 'Primary Menu'
 	],
 
 	'image_sizes' => [],
@@ -37,8 +36,8 @@ return [
 	'customizer' => [
 		'config_id'   => 'vlt_customize',
 		'capability'  => 'edit_theme_options',
-		'option_type' => 'theme_mod',
+		'option_type' => 'theme_mod'
 	],
 
-	'google_fonts' => [],
+	'google_fonts' => []
 ];

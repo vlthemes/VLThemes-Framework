@@ -10,8 +10,7 @@
  *
  * @version 1.0.0
  */
-
-if (! defined('ABSPATH')) {
+if ( !defined( 'ABSPATH' ) ) {
 	exit;
 }
 
@@ -31,14 +30,13 @@ if (! defined('ABSPATH')) {
  *
  * @return mixed Theme mod value or null if not found
  */
-if (! function_exists('vlt_fw_get_theme_mod')) {
-	function vlt_fw_get_theme_mod($key, $use_acf = true, $post_id = null, $acf_name = null)
-	{
-		if (class_exists('VLT\Framework\Modules\Integrations\Kirki')) {
-			return VLT\Framework\Modules\Integrations\Kirki::get_theme_mod($key, $use_acf, $post_id, $acf_name);
+if ( !function_exists( 'vlt_fw_get_theme_mod' ) ) {
+	function vlt_fw_get_theme_mod( $key, $use_acf = true, $post_id = null, $acf_name = null ) {
+		if ( class_exists( 'VLT\Framework\Modules\Integrations\Kirki' ) ) {
+			return VLT\Framework\Modules\Integrations\Kirki::get_theme_mod( $key, $use_acf, $post_id, $acf_name );
 		}
 
-		return get_theme_mod($key, null);
+		return get_theme_mod( $key, null );
 	}
 }
 
@@ -47,10 +45,9 @@ if (! function_exists('vlt_fw_get_theme_mod')) {
  *
  * @return VLT\Framework\Framework|null
  */
-if (! function_exists('vlt_fw')) {
-	function vlt_fw()
-	{
-		if (class_exists('VLT\Framework\Framework')) {
+if ( !function_exists( 'vlt_fw' ) ) {
+	function vlt_fw() {
+		if ( class_exists( 'VLT\Framework\Framework' ) ) {
 			return VLT\Framework\Framework::instance();
 		}
 
@@ -65,12 +62,11 @@ if (! function_exists('vlt_fw')) {
  *
  * @return object|null
  */
-if (! function_exists('vlt_fw_get_module')) {
-	function vlt_fw_get_module($module_name)
-	{
+if ( !function_exists( 'vlt_fw_get_module' ) ) {
+	function vlt_fw_get_module( $module_name ) {
 		$framework = vlt_framework();
 
-		return $framework ? $framework->get_module($module_name) : null;
+		return $framework ? $framework->get_module( $module_name ) : null;
 	}
 }
 
@@ -81,12 +77,11 @@ if (! function_exists('vlt_fw_get_module')) {
  *
  * @return bool
  */
-if (! function_exists('vlt_fw_has_module')) {
-	function vlt_fw_has_module($module_name)
-	{
+if ( !function_exists( 'vlt_fw_has_module' ) ) {
+	function vlt_fw_has_module( $module_name ) {
 		$framework = vlt_framework();
 
-		return $framework ? $framework->has_module($module_name) : false;
+		return $framework ? $framework->has_module( $module_name ) : false;
 	}
 }
 
@@ -98,12 +93,11 @@ if (! function_exists('vlt_fw_has_module')) {
  *
  * @return mixed
  */
-if (! function_exists('vlt_get_config')) {
-	function vlt_fw_get_config($key, $default = null)
-	{
+if ( !function_exists( 'vlt_get_config' ) ) {
+	function vlt_fw_get_config( $key, $default = null ) {
 		$framework = vlt_framework();
 
-		return $framework ? $framework->get_config($key, $default) : $default;
+		return $framework ? $framework->get_config( $key, $default ) : $default;
 	}
 }
 
@@ -120,11 +114,10 @@ if (! function_exists('vlt_get_config')) {
  *
  * @return string CSS variables string or empty string on failure
  */
-if (! function_exists('vlt_fw_get_hsl_variables')) {
-	function vlt_fw_get_hsl_variables($var_name, $color)
-	{
-		if (class_exists('VLT\Framework\Modules\Integrations\Kirki')) {
-			return VLT\Framework\Modules\Integrations\Kirki::get_hsl_variables($var_name, $color);
+if ( !function_exists( 'vlt_fw_get_hsl_variables' ) ) {
+	function vlt_fw_get_hsl_variables( $var_name, $color ) {
+		if ( class_exists( 'VLT\Framework\Modules\Integrations\Kirki' ) ) {
+			return VLT\Framework\Modules\Integrations\Kirki::get_hsl_variables( $var_name, $color );
 		}
 
 		return '';
@@ -147,25 +140,24 @@ if (! function_exists('vlt_fw_get_hsl_variables')) {
  *
  * @return string|false HTML img element or false on failure
  */
-if (! function_exists('vlt_fw_get_attachment_image')) {
-	function vlt_fw_get_attachment_image($image_id, $image_size_key = 'full', $class = '', $image_key = '', $settings = [])
-	{
-		if (class_exists('VLT\Framework\Modules\Utils\Helpers')) {
-			return VLT\Framework\Modules\Utils\Helpers::get_attachment_image($image_id, $image_size_key, $class, $image_key, $settings);
+if ( !function_exists( 'vlt_fw_get_attachment_image' ) ) {
+	function vlt_fw_get_attachment_image( $image_id, $image_size_key = 'full', $class = '', $image_key = '', $settings = [] ) {
+		if ( class_exists( 'VLT\Framework\Modules\Utils\Helpers' ) ) {
+			return VLT\Framework\Modules\Utils\Helpers::get_attachment_image( $image_id, $image_size_key, $class, $image_key, $settings );
 		}
 
 		// Fallback: basic implementation via wp_get_attachment_image
-		if (empty($image_id)) {
+		if ( empty( $image_id ) ) {
 			return false;
 		}
 
 		$attrs = [ 'loading' => 'lazy' ];
 
-		if (! empty($class)) {
-			$attrs['class'] = trim($class);
+		if ( !empty( $class ) ) {
+			$attrs['class'] = trim( $class );
 		}
 
-		return wp_get_attachment_image($image_id, $image_size_key, false, $attrs);
+		return wp_get_attachment_image( $image_id, $image_size_key, false, $attrs );
 	}
 }
 
@@ -183,21 +175,20 @@ if (! function_exists('vlt_fw_get_attachment_image')) {
  *
  * @return string|false Image URL or false if not found
  */
-if (! function_exists('vlt_fw_get_attachment_image_src')) {
-	function vlt_fw_get_attachment_image_src($image_id, $image_size_key = 'full', string $image_key = '', array $settings = [])
-	{
-		if (class_exists('VLT\Framework\Modules\Utils\Helpers')) {
-			return VLT\Framework\Modules\Utils\Helpers::get_attachment_image_src($image_id, $image_size_key, $image_key, $settings);
+if ( !function_exists( 'vlt_fw_get_attachment_image_src' ) ) {
+	function vlt_fw_get_attachment_image_src( $image_id, $image_size_key = 'full', string $image_key = '', array $settings = [] ) {
+		if ( class_exists( 'VLT\Framework\Modules\Utils\Helpers' ) ) {
+			return VLT\Framework\Modules\Utils\Helpers::get_attachment_image_src( $image_id, $image_size_key, $image_key, $settings );
 		}
 
 		// Fallback: basic implementation
-		if (empty($image_id)) {
+		if ( empty( $image_id ) ) {
 			return false;
 		}
 
-		$image_src = wp_get_attachment_image_src($image_id, $image_size_key);
+		$image_src = wp_get_attachment_image_src( $image_id, $image_size_key );
 
-		if (! $image_src) {
+		if ( !$image_src ) {
 			return false;
 		}
 
@@ -217,11 +208,10 @@ if (! function_exists('vlt_fw_get_attachment_image_src')) {
  *
  * @return bool Boolean value
  */
-if (! function_exists('vlt_fw_string_to_bool')) {
-	function vlt_fw_string_to_bool($value)
-	{
-		if (class_exists('VLT\Framework\Modules\Utils\Sanitize')) {
-			return VLT\Framework\Modules\Utils\Sanitize::string_to_bool($value);
+if ( !function_exists( 'vlt_fw_string_to_bool' ) ) {
+	function vlt_fw_string_to_bool( $value ) {
+		if ( class_exists( 'VLT\Framework\Modules\Utils\Sanitize' ) ) {
+			return VLT\Framework\Modules\Utils\Sanitize::string_to_bool( $value );
 		}
 
 		return (bool) $value;
@@ -240,14 +230,13 @@ if (! function_exists('vlt_fw_string_to_bool')) {
  *
  * @return string Sanitized CSS class name(s)
  */
-if (! function_exists('vlt_fw_sanitize_class')) {
-	function vlt_fw_sanitize_class($class)
-	{
-		if (class_exists('VLT\Framework\Modules\Utils\Sanitize')) {
-			return VLT\Framework\Modules\Utils\Sanitize::sanitize_class($class);
+if ( !function_exists( 'vlt_fw_sanitize_class' ) ) {
+	function vlt_fw_sanitize_class( $class ) {
+		if ( class_exists( 'VLT\Framework\Modules\Utils\Sanitize' ) ) {
+			return VLT\Framework\Modules\Utils\Sanitize::sanitize_class( $class );
 		}
 
-		return sanitize_html_class($class);
+		return sanitize_html_class( $class );
 	}
 }
 
@@ -263,14 +252,13 @@ if (! function_exists('vlt_fw_sanitize_class')) {
  *
  * @return string Sanitized CSS style string
  */
-if (! function_exists('vlt_fw_sanitize_style')) {
-	function vlt_fw_sanitize_style($style)
-	{
-		if (class_exists('VLT\Framework\Modules\Utils\Sanitize')) {
-			return VLT\Framework\Modules\Utils\Sanitize::style($style);
+if ( !function_exists( 'vlt_fw_sanitize_style' ) ) {
+	function vlt_fw_sanitize_style( $style ) {
+		if ( class_exists( 'VLT\Framework\Modules\Utils\Sanitize' ) ) {
+			return VLT\Framework\Modules\Utils\Sanitize::style( $style );
 		}
 
-		return wp_strip_all_tags($style);
+		return wp_strip_all_tags( $style );
 	}
 }
 
@@ -284,17 +272,16 @@ if (! function_exists('vlt_fw_sanitize_style')) {
  *
  * @return void
  */
-if (! function_exists('vlt_fw_body_open')) {
-	function vlt_fw_body_open(): void
-	{
-		if (function_exists('wp_body_open')) {
+if ( !function_exists( 'vlt_fw_body_open' ) ) {
+	function vlt_fw_body_open() {
+		if ( function_exists( 'wp_body_open' ) ) {
 			wp_body_open();
 		} else {
-			do_action('wp_body_open');
+			do_action( 'wp_body_open' );
 		}
 
 		// Framework-specific action for additional body open hooks
-		do_action('vlt_fw_body_open');
+		do_action( 'vlt_fw_body_open' );
 	}
 }
 
@@ -309,11 +296,10 @@ if (! function_exists('vlt_fw_body_open')) {
  *
  * @return void|false False if menu doesn't exist, void otherwise
  */
-if (! function_exists('vlt_fw_display_menu')) {
-	function vlt_fw_display_menu($location, $args = [])
-	{
-		if (class_exists('VLT\Framework\Modules\Core\Menus')) {
-			return VLT\Framework\Modules\Core\Menus::display_menu($location, $args);
+if ( !function_exists( 'vlt_fw_display_menu' ) ) {
+	function vlt_fw_display_menu( $location, $args = [] ) {
+		if ( class_exists( 'VLT\Framework\Modules\Core\Menus' ) ) {
+			return VLT\Framework\Modules\Core\Menus::display_menu( $location, $args );
 		}
 
 		return false;
@@ -329,11 +315,10 @@ if (! function_exists('vlt_fw_display_menu')) {
  *
  * @return bool
  */
-if (! function_exists('vlt_fw_has_menu')) {
-	function vlt_fw_has_menu($location)
-	{
-		if (class_exists('VLT\Framework\Modules\Core\Menus')) {
-			return VLT\Framework\Modules\Core\Menus::has_menu($location);
+if ( !function_exists( 'vlt_fw_has_menu' ) ) {
+	function vlt_fw_has_menu( $location ) {
+		if ( class_exists( 'VLT\Framework\Modules\Core\Menus' ) ) {
+			return VLT\Framework\Modules\Core\Menus::has_menu( $location );
 		}
 
 		return false;
@@ -350,10 +335,9 @@ if (! function_exists('vlt_fw_has_menu')) {
  *
  * @return string Breakpoint size identifier (xs, sm, md, lg, xl), default: 'xl'
  */
-if (! function_exists('vlt_fw_nav_breakpoint')) {
-	function vlt_fw_nav_breakpoint()
-	{
-		if (class_exists('VLT\Framework\Modules\Core\Menus')) {
+if ( !function_exists( 'vlt_fw_nav_breakpoint' ) ) {
+	function vlt_fw_nav_breakpoint() {
+		if ( class_exists( 'VLT\Framework\Modules\Core\Menus' ) ) {
 			return VLT\Framework\Modules\Core\Menus::get_nav_breakpoint();
 		}
 
@@ -374,11 +358,10 @@ if (! function_exists('vlt_fw_nav_breakpoint')) {
  *
  * @return string SVG markup or empty string if icon not found
  */
-if (! function_exists('vlt_fw_get_svg_icon')) {
-	function vlt_fw_get_svg_icon($icon, $class = '')
-	{
-		if (class_exists('VLT\Framework\Modules\Features\Icons')) {
-			return VLT\Framework\Modules\Features\Icons::get($icon, $class);
+if ( !function_exists( 'vlt_fw_get_svg_icon' ) ) {
+	function vlt_fw_get_svg_icon( $icon, $class = '' ) {
+		if ( class_exists( 'VLT\Framework\Modules\Features\Icons' ) ) {
+			return VLT\Framework\Modules\Features\Icons::get( $icon, $class );
 		}
 
 		return '';
@@ -397,11 +380,10 @@ if (! function_exists('vlt_fw_get_svg_icon')) {
  *
  * @return array|string Video data array or empty string on failure
  */
-if (! function_exists('vlt_fw_parse_video_id')) {
-	function vlt_fw_parse_video_id($url)
-	{
-		if (class_exists('VLT\Framework\Modules\Utils\Helpers')) {
-			return VLT\Framework\Modules\Utils\Helpers::parse_video_id($url);
+if ( !function_exists( 'vlt_fw_parse_video_id' ) ) {
+	function vlt_fw_parse_video_id( $url ) {
+		if ( class_exists( 'VLT\Framework\Modules\Utils\Helpers' ) ) {
+			return VLT\Framework\Modules\Utils\Helpers::parse_video_id( $url );
 		}
 
 		return '';
@@ -424,11 +406,10 @@ if (! function_exists('vlt_fw_parse_video_id')) {
  *
  * @return string Formatted taxonomy terms string or empty string
  */
-if (! function_exists('vlt_fw_get_post_taxonomy')) {
-	function vlt_fw_get_post_taxonomy($post_id, $taxonomy, $delimiter = ', ', $get = 'name', $link = true)
-	{
-		if (class_exists('VLT\Framework\Modules\Utils\Helpers')) {
-			return VLT\Framework\Modules\Utils\Helpers::get_post_taxonomy($post_id, $taxonomy, $delimiter, $get, $link);
+if ( !function_exists( 'vlt_fw_get_post_taxonomy' ) ) {
+	function vlt_fw_get_post_taxonomy( $post_id, $taxonomy, $delimiter = ', ', $get = 'name', $link = true ) {
+		if ( class_exists( 'VLT\Framework\Modules\Utils\Helpers' ) ) {
+			return VLT\Framework\Modules\Utils\Helpers::get_post_taxonomy( $post_id, $taxonomy, $delimiter, $get, $link );
 		}
 
 		return '';
@@ -448,11 +429,10 @@ if (! function_exists('vlt_fw_get_post_taxonomy')) {
  *
  * @return string Trimmed content with ellipsis or empty string
  */
-if (! function_exists('vlt_fw_get_trimmed_content')) {
-	function vlt_fw_get_trimmed_content($post_id = null, $max_words = 18)
-	{
-		if (class_exists('VLT\Framework\Modules\Utils\Helpers')) {
-			return VLT\Framework\Modules\Utils\Helpers::get_trimmed_content($post_id, $max_words);
+if ( !function_exists( 'vlt_fw_get_trimmed_content' ) ) {
+	function vlt_fw_get_trimmed_content( $post_id = null, $max_words = 18 ) {
+		if ( class_exists( 'VLT\Framework\Modules\Utils\Helpers' ) ) {
+			return VLT\Framework\Modules\Utils\Helpers::get_trimmed_content( $post_id, $max_words );
 		}
 
 		return '';
@@ -471,23 +451,21 @@ if (! function_exists('vlt_fw_get_trimmed_content')) {
  *
  * @return mixed Field value, or null if not found or ACF not active
  */
-if (! function_exists('vlt_fw_get_field')) {
-	function vlt_fw_get_field($field_name, $post_id = false, $format_value = true)
-	{
-
-		if ($field_name === null || ! function_exists('get_field')) {
+if ( !function_exists( 'vlt_fw_get_field' ) ) {
+	function vlt_fw_get_field( $field_name, $post_id = false, $format_value = true ) {
+		if ( null === $field_name || !function_exists( 'get_field' ) ) {
 			return null;
 		}
 
-		if ($post_id === null) {
+		if ( null === $post_id ) {
 			$post_id = get_the_ID();
 		}
 
 		$value = null;
 
 		try {
-			$value = get_field($field_name, $post_id, $format_value);
-		} catch (Exception $e) {
+			$value = get_field( $field_name, $post_id, $format_value );
+		} catch ( Exception $e ) {
 			$value = null;
 		}
 
@@ -498,10 +476,9 @@ if (! function_exists('vlt_fw_get_field')) {
 /**
  * Get placeholder image source URL
  */
-if (! function_exists('vlt_fw_get_placeholder_image_src')) {
-	function vlt_fw_get_placeholder_image_src()
-	{
-		if (class_exists('\VLT\Framework\Modules\Utils\Helpers')) {
+if ( !function_exists( 'vlt_fw_get_placeholder_image_src' ) ) {
+	function vlt_fw_get_placeholder_image_src() {
+		if ( class_exists( '\VLT\Framework\Modules\Utils\Helpers' ) ) {
 			return VLT\Framework\Modules\Utils\Helpers::get_placeholder_image_src();
 		}
 
@@ -512,39 +489,13 @@ if (! function_exists('vlt_fw_get_placeholder_image_src')) {
 /**
  * Get placeholder image HTML
  */
-if (! function_exists('vlt_fw_get_placeholder_image')) {
-	function vlt_fw_get_placeholder_image($class = '', $alt = '')
-	{
-		if (class_exists('\VLT\Framework\Modules\Utils\Helpers')) {
-			return VLT\Framework\Modules\Utils\Helpers::get_placeholder_image($class, $alt);
+if ( !function_exists( 'vlt_fw_get_placeholder_image' ) ) {
+	function vlt_fw_get_placeholder_image( $class = '', $alt = '' ) {
+		if ( class_exists( '\VLT\Framework\Modules\Utils\Helpers' ) ) {
+			return VLT\Framework\Modules\Utils\Helpers::get_placeholder_image( $class, $alt );
 		}
 
 		return '';
-	}
-}
-
-/**
- * Parse dynamic content variables in text
- *
- * Replaces dynamic variables with their actual values:
- * - {{YEAR}} - Current year (e.g., 2025)
- * - {{SITE_TITLE}} - Site title from WordPress settings
- * - {{SITE_URL}} - Home URL of the site
- * - {{SITE_NAME}} - Site name (blogname)
- * - {{ADMIN_EMAIL}} - Administrator email
- *
- * @param string $text Text containing dynamic variables
- *
- * @return string Parsed text with replaced variables
- */
-if (! function_exists('vlt_fw_parse_dynamic_content')) {
-	function vlt_fw_parse_dynamic_content($text)
-	{
-		if (class_exists('\VLT\Framework\Modules\Utils\Helpers')) {
-			return VLT\Framework\Modules\Utils\Helpers::parse_dynamic_content($text);
-		}
-
-		return $text;
 	}
 }
 
@@ -558,11 +509,10 @@ if (! function_exists('vlt_fw_parse_dynamic_content')) {
  *
  * @return array Choices array or empty array if not found
  */
-if (! function_exists('vlt_fw_get_setting_choices')) {
-	function vlt_fw_get_setting_choices($setting_id)
-	{
-		if (class_exists('\VLT\Framework\Modules\Integrations\Kirki')) {
-			return VLT\Framework\Modules\Integrations\Kirki::get_setting_choices($setting_id);
+if ( !function_exists( 'vlt_fw_get_setting_choices' ) ) {
+	function vlt_fw_get_setting_choices( $setting_id ) {
+		if ( class_exists( '\VLT\Framework\Modules\Integrations\Kirki' ) ) {
+			return VLT\Framework\Modules\Integrations\Kirki::get_setting_choices( $setting_id );
 		}
 
 		return [];

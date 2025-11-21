@@ -4,32 +4,29 @@ namespace VLT\Framework\Modules\Core;
 
 use VLT\Framework\BaseModule;
 
-if (! defined('ABSPATH')) {
+if ( !defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class Sidebars extends BaseModule
-{
+class Sidebars extends BaseModule {
 	protected $name = 'sidebars';
 
 	/**
 	 * Register module
 	 */
-	public function register(): void
-	{
-		add_action('widgets_init', [ $this, 'register_sidebars' ]);
+	public function register() {
+		add_action( 'widgets_init', [ $this, 'register_sidebars' ] );
 	}
 
 	/**
 	 * Register all sidebars
 	 */
-	public function register_sidebars(): void
-	{
+	public function register_sidebars() {
 		// Register default sidebars from config
 		$this->register_default_sidebars();
 
 		// Register Shop Sidebar if WooCommerce is active
-		if (class_exists('WooCommerce')) {
+		if ( class_exists( 'WooCommerce' ) ) {
 			$this->register_shop_sidebar();
 		}
 
@@ -40,55 +37,51 @@ class Sidebars extends BaseModule
 	/**
 	 * Register default sidebars from config
 	 */
-	private function register_default_sidebars(): void
-	{
-		$sidebars = $this->get_config('sidebars', []);
+	private function register_default_sidebars() {
+		$sidebars = $this->get_config( 'sidebars', [] );
 
-		if (empty($sidebars) || ! is_array($sidebars)) {
+		if ( empty( $sidebars ) || !is_array( $sidebars ) ) {
 			return;
 		}
 
-		foreach ($sidebars as $sidebar) {
-			$this->register_single_sidebar($sidebar);
+		foreach ( $sidebars as $sidebar ) {
+			$this->register_single_sidebar( $sidebar );
 		}
 	}
 
 	/**
 	 * Register shop sidebar for WooCommerce
 	 */
-	private function register_shop_sidebar(): void
-	{
+	private function register_shop_sidebar() {
 		$this->register_single_sidebar(
 			[
-				'name'        => __('Shop Sidebar', '@@textdomain'),
+				'name'        => __( 'Shop Sidebar', '@@textdomain' ),
 				'id'          => 'shop-sidebar',
-				'description' => __('Sidebar for WooCommerce shop pages.', '@@textdomain'),
-			],
+				'description' => __( 'Sidebar for WooCommerce shop pages.', '@@textdomain' )
+			]
 		);
 	}
 
 	/**
 	 * Register custom sidebars from theme filter
 	 */
-	private function register_custom_sidebars(): void
-	{
-		$custom_sidebars = apply_filters('vlt_fw_custom_sidebars', []);
+	private function register_custom_sidebars() {
+		$custom_sidebars = apply_filters( 'vlt_fw_custom_sidebars', [] );
 
-		if (empty($custom_sidebars) || ! is_array($custom_sidebars)) {
+		if ( empty( $custom_sidebars ) || !is_array( $custom_sidebars ) ) {
 			return;
 		}
 
-		foreach ($custom_sidebars as $sidebar) {
-			$this->register_single_sidebar($sidebar);
+		foreach ( $custom_sidebars as $sidebar ) {
+			$this->register_single_sidebar( $sidebar );
 		}
 	}
 
 	/**
 	 * Register single sidebar
 	 */
-	private function register_single_sidebar($sidebar): void
-	{
-		if (empty($sidebar['id']) || empty($sidebar['name'])) {
+	private function register_single_sidebar( $sidebar ) {
+		if ( empty( $sidebar['id'] ) || empty( $sidebar['name'] ) ) {
 			return;
 		}
 
@@ -99,11 +92,11 @@ class Sidebars extends BaseModule
 			'before_widget' => '<div id="%1$s" class="vlt-widget %2$s">',
 			'after_widget'  => '</div>',
 			'before_title'  => '<h5 class="vlt-widget__title">',
-			'after_title'   => '</h5>',
+			'after_title'   => '</h5>'
 		];
 
-		$args = wp_parse_args($sidebar, $defaults);
+		$args = wp_parse_args( $sidebar, $defaults );
 
-		register_sidebar($args);
+		register_sidebar( $args );
 	}
 }

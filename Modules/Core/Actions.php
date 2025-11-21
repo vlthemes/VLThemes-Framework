@@ -4,33 +4,29 @@ namespace VLT\Framework\Modules\Core;
 
 use VLT\Framework\BaseModule;
 
-if (! defined('ABSPATH')) {
+if ( !defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class Actions extends BaseModule
-{
+class Actions extends BaseModule {
 	protected $name    = 'actions';
 	protected $version = '1.0.0';
 
 	/**
 	 * Register module
 	 */
-	public function register(): void
-	{
-		add_action('wp_body_open', [ $this, 'wp_body_open' ]);
-		add_action('wp_body_open', [ $this, 'skip_link' ]);
+	public function register() {
+		add_action( 'wp_body_open', [ $this, 'wp_body_open' ] );
+		add_action( 'wp_body_open', [ $this, 'skip_link' ] );
 
-		do_action('vlt_fw_actions_init');
+		do_action( 'vlt_fw_actions_init' );
 	}
 
-	public function wp_body_open()
-	{
-		return do_action('vlt_fw_action_body_open');
+	public function wp_body_open() {
+		return do_action( 'vlt_fw_action_body_open' );
 	}
 
-	public function skip_link(): void
-	{
-		echo '<a class="skip-link screen-reader-text" href="#content">' . esc_html__('Skip to content', '@@textdomain') . '</a>';
+	public function skip_link() {
+		echo '<a class="skip-link screen-reader-text" href="#content">' . esc_html__( 'Skip to content', '@@textdomain' ) . '</a>';
 	}
 }
