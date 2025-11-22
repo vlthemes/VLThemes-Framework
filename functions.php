@@ -403,34 +403,8 @@ if ( !function_exists( 'vlt_fw_get_svg_icon' ) ) {
  */
 if ( !function_exists( 'vlt_fw_parse_video_id' ) ) {
 	function vlt_fw_parse_video_id( $url ) {
-		if ( class_exists( 'VLT\Framework\Modules\Utils\Helpers' ) ) {
-			return VLT\Framework\Modules\Utils\Helpers::parse_video_id( $url );
-		}
-
-		return '';
-	}
-}
-
-/**
- * Get post taxonomy terms as formatted string
- *
- * Returns post terms from specified taxonomy with optional linking.
- * Supports custom delimiter and output format.
- *
- * Wrapper for Helpers::get_post_taxonomy() static method
- *
- * @param int    $post_id   Post ID
- * @param string $taxonomy  Taxonomy name (category, post_tag, custom taxonomy)
- * @param string $delimiter Separator between terms, default: ', '
- * @param string $get       Term property to get: 'name', 'slug', 'id', default: 'name'
- * @param bool   $link      Whether to wrap terms in links, default: true
- *
- * @return string Formatted taxonomy terms string or empty string
- */
-if ( !function_exists( 'vlt_fw_get_post_taxonomy' ) ) {
-	function vlt_fw_get_post_taxonomy( $post_id, $taxonomy, $delimiter = ', ', $get = 'name', $link = true ) {
-		if ( class_exists( 'VLT\Framework\Modules\Utils\Helpers' ) ) {
-			return VLT\Framework\Modules\Utils\Helpers::get_post_taxonomy( $post_id, $taxonomy, $delimiter, $get, $link );
+		if ( function_exists( 'vlt_toolkit_parse_video_id' ) ) {
+			return vlt_toolkit_parse_video_id( $url );
 		}
 
 		return '';

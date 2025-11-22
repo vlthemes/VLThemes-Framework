@@ -19,21 +19,24 @@ class Setup extends BaseModule {
 	 * Register module
 	 */
 	public function register() {
+		add_action( 'init', [ $this, 'load_textdomain' ], 1 );
 		add_action( 'after_setup_theme', [ $this, 'theme_setup' ] );
 		add_action( 'after_setup_theme', [ $this, 'content_width' ], 0 );
+	}
+
+	/**
+	 * Load theme textdomain
+	 */
+	public function load_textdomain() {
+		if ( version_compare( $GLOBALS['wp_version'], '4.6', '<' ) ) {
+			load_theme_textdomain( '@@textdomain' );
+		}
 	}
 
 	/**
 	 * Theme setup
 	 */
 	public function theme_setup() {
-		$theme_domain_path = apply_filters(
-			'vlt_fw_theme_domain_path',
-			get_template_directory() . '/languages'
-		);
-
-		load_theme_textdomain( '@@textdomain', $theme_domain_path );
-
 		$this->add_theme_support();
 		$this->register_image_sizes();
 

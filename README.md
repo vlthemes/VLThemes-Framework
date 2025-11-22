@@ -106,9 +106,6 @@ The framework uses a modular architecture with the following module types:
 ### Content Functions
 - `vlt_fw_get_trimmed_content()` - Get trimmed content with word limit
 
-### Taxonomy Functions
-- `vlt_fw_get_post_taxonomy()` - Get post taxonomy terms
-
 ### Video Functions
 - `vlt_fw_parse_video_id()` - Parse video ID from URL
 
