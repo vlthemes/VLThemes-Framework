@@ -132,18 +132,20 @@ if ( !function_exists( 'vlt_fw_get_hsl_variables' ) ) {
  *
  * Wrapper for Image::get_attachment_image() static method
  *
- * @param int    $image_id       Image attachment ID
- * @param string $image_size_key Image size key (or 'custom')
- * @param string $class          Additional CSS classes
- * @param string $image_key      Image key for custom dimensions (optional)
- * @param array  $settings       Settings array with custom dimensions (optional)
+ * @param int   $image_id Image attachment ID
+ * @param array $args     Optional. Arguments array with keys:
+ *                        - size (string|array): Image size key or [w, h, crop]. Default 'full'.
+ *                        - class (string): Additional CSS classes. Default ''.
+ *                        - image_key (string): Image key for custom dimensions. Default ''.
+ *                        - settings (array): Settings array with custom dimensions. Default [].
+ *                        - lazy_load (bool): Enable lazy loading. Default true.
  *
  * @return string|false HTML img element or false on failure
  */
 if ( !function_exists( 'vlt_fw_get_attachment_image' ) ) {
-	function vlt_fw_get_attachment_image( $image_id, $image_size_key = 'full', $class = '', $image_key = '', $settings = [] ) {
-		if ( class_exists( 'VLT\Framework\Modules\Utils\Helpers' ) ) {
-			return VLT\Framework\Modules\Utils\Helpers::get_attachment_image( $image_id, $image_size_key, $class, $image_key, $settings );
+	function vlt_fw_get_attachment_image( $image_id, $args = [] ) {
+		if ( function_exists( 'vlt_toolkit_get_attachment_image' ) ) {
+			return vlt_toolkit_get_attachment_image( $image_id, $args );
 		}
 
 		// Fallback: basic implementation via wp_get_attachment_image
@@ -151,13 +153,25 @@ if ( !function_exists( 'vlt_fw_get_attachment_image' ) ) {
 			return false;
 		}
 
-		$attrs = [ 'loading' => 'lazy' ];
+		$defaults = [
+			'size'      => 'full',
+			'class'     => '',
+			'lazy_load' => true,
+		];
 
-		if ( !empty( $class ) ) {
-			$attrs['class'] = trim( $class );
+		$args = wp_parse_args( $args, $defaults );
+
+		$attrs = [];
+
+		if ( $args['lazy_load'] ) {
+			$attrs['loading'] = 'lazy';
 		}
 
-		return wp_get_attachment_image( $image_id, $image_size_key, false, $attrs );
+		if ( !empty( $args['class'] ) ) {
+			$attrs['class'] = trim( $args['class'] );
+		}
+
+		return wp_get_attachment_image( $image_id, $args['size'], false, $attrs );
 	}
 }
 
@@ -168,17 +182,18 @@ if ( !function_exists( 'vlt_fw_get_attachment_image' ) ) {
  *
  * Wrapper for Image::get_attachment_image_src() static method
  *
- * @param int          $image_id       Image attachment ID
- * @param string|array $image_size_key Image size key, array [w, h, crop], or 'custom'
- * @param string       $image_key      Image key for custom dimensions (used with 'custom')
- * @param array        $settings       Settings array with custom dimensions
+ * @param int   $image_id Image attachment ID
+ * @param array $args     Optional. Arguments array with keys:
+ *                        - size (string|array): Image size key or [w, h, crop]. Default 'full'.
+ *                        - image_key (string): Image key for custom dimensions. Default ''.
+ *                        - settings (array): Settings array with custom dimensions. Default [].
  *
  * @return string|false Image URL or false if not found
  */
 if ( !function_exists( 'vlt_fw_get_attachment_image_src' ) ) {
-	function vlt_fw_get_attachment_image_src( $image_id, $image_size_key = 'full', string $image_key = '', array $settings = [] ) {
-		if ( class_exists( 'VLT\Framework\Modules\Utils\Helpers' ) ) {
-			return VLT\Framework\Modules\Utils\Helpers::get_attachment_image_src( $image_id, $image_size_key, $image_key, $settings );
+	function vlt_fw_get_attachment_image_src( $image_id, $args = [] ) {
+		if ( function_exists( 'vlt_toolkit_get_attachment_image_src' ) ) {
+			return vlt_toolkit_get_attachment_image_src( $image_id, $args );
 		}
 
 		// Fallback: basic implementation
@@ -186,7 +201,13 @@ if ( !function_exists( 'vlt_fw_get_attachment_image_src' ) ) {
 			return false;
 		}
 
-		$image_src = wp_get_attachment_image_src( $image_id, $image_size_key );
+		$defaults = [
+			'size' => 'full',
+		];
+
+		$args = wp_parse_args( $args, $defaults );
+
+		$image_src = wp_get_attachment_image_src( $image_id, $args['size'] );
 
 		if ( !$image_src ) {
 			return false;
@@ -431,11 +452,11 @@ if ( !function_exists( 'vlt_fw_get_post_taxonomy' ) ) {
  */
 if ( !function_exists( 'vlt_fw_get_trimmed_content' ) ) {
 	function vlt_fw_get_trimmed_content( $post_id = null, $max_words = 18 ) {
-		if ( class_exists( 'VLT\Framework\Modules\Utils\Helpers' ) ) {
-			return VLT\Framework\Modules\Utils\Helpers::get_trimmed_content( $post_id, $max_words );
+		if ( function_exists( 'vlt_toolkit_get_trimmed_content' ) ) {
+			return vlt_toolkit_get_trimmed_content( $post_id, $max_words );
 		}
 
-		return '';
+		return get_the_excerpt( $post_id );
 	}
 }
 
@@ -478,8 +499,8 @@ if ( !function_exists( 'vlt_fw_get_field' ) ) {
  */
 if ( !function_exists( 'vlt_fw_get_placeholder_image_src' ) ) {
 	function vlt_fw_get_placeholder_image_src() {
-		if ( class_exists( '\VLT\Framework\Modules\Utils\Helpers' ) ) {
-			return VLT\Framework\Modules\Utils\Helpers::get_placeholder_image_src();
+		if ( function_exists( 'vlt_toolkit_get_placeholder_image_src' ) ) {
+			return vlt_toolkit_get_placeholder_image_src();
 		}
 
 		return '';
@@ -491,8 +512,8 @@ if ( !function_exists( 'vlt_fw_get_placeholder_image_src' ) ) {
  */
 if ( !function_exists( 'vlt_fw_get_placeholder_image' ) ) {
 	function vlt_fw_get_placeholder_image( $class = '', $alt = '' ) {
-		if ( class_exists( '\VLT\Framework\Modules\Utils\Helpers' ) ) {
-			return VLT\Framework\Modules\Utils\Helpers::get_placeholder_image( $class, $alt );
+		if ( function_exists( 'vlt_toolkit_get_placeholder_image' ) ) {
+			return vlt_toolkit_get_placeholder_image( $class, $alt );
 		}
 
 		return '';
