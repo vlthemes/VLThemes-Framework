@@ -39,6 +39,9 @@ class Kirki extends BaseModule {
 		if ( !empty( $this->config_id ) ) {
 			add_filter( 'kirki_' . $this->config_id . '_dynamic_css', [ $this, 'output_dynamic_css' ] );
 		}
+
+		// Disable Kirki update notifications
+		add_filter( 'site_transient_update_plugins', [ $this, 'disable_kirki_update_notification' ] );
 	}
 
 	/**
@@ -382,5 +385,18 @@ class Kirki extends BaseModule {
 		}
 
 		return 'vlt_customize';
+	}
+
+	/**
+	 * Disable Kirki update notifications
+	 */
+	public function disable_kirki_update_notification( $value ) {
+		if ( isset( $value ) && is_object( $value ) ) {
+			if ( isset( $value->response['kirki/kirki.php'] ) ) {
+				unset( $value->response['kirki/kirki.php'] );
+			}
+		}
+
+		return $value;
 	}
 }
