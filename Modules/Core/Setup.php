@@ -51,9 +51,17 @@ class Setup extends BaseModule {
 	}
 
 	/**
-	 * Add theme support features from config
+	 * Add theme support features
 	 */
 	private function add_theme_support() {
+		// Default theme supports
+		add_theme_support( 'title-tag' );
+		add_theme_support( 'post-thumbnails' );
+		add_theme_support( 'automatic-feed-links' );
+		add_theme_support( 'html5', [ 'search-form', 'comment-form', 'comment-list', 'gallery', 'caption' ] );
+		add_theme_support( 'post-formats', [ 'gallery', 'video', 'audio', 'quote', 'link' ] );
+
+		// Additional theme supports from config
 		$supports = $this->get_config( 'theme_support', [] );
 
 		foreach ( $supports as $feature => $args ) {
