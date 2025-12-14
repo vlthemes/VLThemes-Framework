@@ -88,7 +88,7 @@ class Assets extends BaseModule {
 				$font_name    = $parts[0];
 				$font_weights = isset( $parts[1] ) ? ':' . $parts[1] : '';
 
-				return urlencode( $font_name ) . $font_weights;
+				return $font_name . $font_weights;
 			},
 			$fonts
 		);
