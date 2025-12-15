@@ -513,3 +513,48 @@ if ( !function_exists( 'vlt_fw_get_setting_choices' ) ) {
 		return [];
 	}
 }
+
+/**
+ * Convert pixels to rem units
+ *
+ * Converts pixel values to rem units for better scalability and accessibility.
+ * Uses 16px as the base font size (1rem = 16px).
+ *
+ * @param string|int|float $size Size in pixels (can include 'px' suffix or be numeric)
+ * @param int              $base Base font size in pixels (default: 16)
+ *
+ * @return string Converted value in rem units with 'rem' suffix
+ *
+ * @example
+ * vlt_fw_px2rem(16)      // Returns: '1rem'
+ * vlt_fw_px2rem('24px')  // Returns: '1.5rem'
+ * vlt_fw_px2rem(-10)     // Returns: '-0.625rem'
+ * vlt_fw_px2rem('0')     // Returns: '0'
+ */
+if ( !function_exists( 'vlt_fw_px2rem' ) ) {
+	function vlt_fw_px2rem( $size, $base = 16 ) {
+		// Handle empty or null values
+		if ( empty( $size ) && $size !== 0 && $size !== '0' ) {
+			return '0';
+		}
+
+		// Convert to string and remove 'px' suffix if present
+		$size = is_numeric( $size ) ? $size : trim( str_replace( 'px', '', $size ) );
+
+		// Convert to float
+		$size = floatval( $size );
+
+		// Return 0 without unit for zero values
+		if ( $size === 0.0 ) {
+			return '0';
+		}
+
+		// Calculate rem value
+		$rem_value = $size / $base;
+
+		// Round to 4 decimal places and remove trailing zeros
+		$rem_value = rtrim( rtrim( number_format( $rem_value, 4, '.', '' ), '0' ), '.' );
+
+		return $rem_value . 'rem';
+	}
+}
