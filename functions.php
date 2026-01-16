@@ -369,13 +369,14 @@ if ( !function_exists( 'vlt_fw_nav_breakpoint' ) ) {
 /**
  * Get SVG icon markup
  *
- * Retrieves SVG icon from framework icon registry.
+ * Retrieves SVG icon(s) from framework icon registry.
  * Icons are registered via 'vlt_fw_icons' filter.
+ * Supports both single icon (string) and multiple icons (array).
  *
  * Wrapper for Icons::get() static method
  *
- * @param string $icon  Icon name/slug
- * @param string $class Additional CSS class to add to SVG element
+ * @param string|array $icon  Icon name/slug or array of icon names
+ * @param string       $class Additional CSS class to add to SVG element(s)
  *
  * @return string SVG markup or empty string if icon not found
  */

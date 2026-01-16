@@ -25,6 +25,16 @@ class Icons extends BaseModule {
 	 * Get icon SVG markup
 	 */
 	public static function get( $icon, $class = '' ) {
+		// Check if $icon is an array
+		if ( is_array( $icon ) ) {
+			$output = '';
+			foreach ( $icon as $single_icon ) {
+				$output .= self::get( $single_icon, $class );
+			}
+			return $output;
+		}
+
+		// Single icon (string)
 		$icons = self::get_icons();
 
 		if ( !isset( $icons[ $icon ] ) ) {
