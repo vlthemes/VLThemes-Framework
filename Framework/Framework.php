@@ -265,10 +265,10 @@ final class Framework {
 				'priority' => 1
 			],
 
-			'kirki' => [
-				'class'    => 'Modules\\Integrations\\Kirki',
-				'required' => true,
-				'enabled'  => $this->get_config( 'modules.kirki', true ),
+			'customizer' => [
+				'class'    => 'Modules\\Core\\Customizer',
+				'required' => false,
+				'enabled'  => $this->get_config( 'modules.customizer', false ),
 				'priority' => 1
 			],
 

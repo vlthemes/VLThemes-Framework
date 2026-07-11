@@ -18,10 +18,10 @@ if ( !defined( 'ABSPATH' ) ) {
  * Get theme mod value with ACF override support
  *
  * Universal theme option getter with ACF integration.
- * Order: ACF (post/options page) → Kirki/theme_mod → stored field default → null
+ * Order: ACF (post/options page) → Customizer/theme_mod → stored field default → null
  * Archives/search/404 pages always return global values.
  *
- * Wrapper for Kirki::get_theme_mod() static method
+ * Wrapper for Customizer::get_theme_mod() static method
  *
  * @param string      $key      Setting key
  * @param bool        $use_acf  Try ACF first? (default: true)
@@ -32,8 +32,8 @@ if ( !defined( 'ABSPATH' ) ) {
  */
 if ( !function_exists( 'vlt_fw_get_theme_mod' ) ) {
 	function vlt_fw_get_theme_mod( $key, $use_acf = true, $post_id = null, $acf_name = null ) {
-		if ( class_exists( 'VLT\Framework\Modules\Integrations\Kirki' ) ) {
-			return VLT\Framework\Modules\Integrations\Kirki::get_theme_mod( $key, $use_acf, $post_id, $acf_name );
+		if ( class_exists( 'VLT\Framework\Modules\Core\Customizer' ) ) {
+			return VLT\Framework\Modules\Core\Customizer::get_theme_mod( $key, $use_acf, $post_id, $acf_name );
 		}
 
 		return get_theme_mod( $key, null );
@@ -107,7 +107,7 @@ if ( !function_exists( 'vlt_get_config' ) ) {
  * Converts hex color to HSL format and generates CSS custom properties.
  * Output example: --color: 220, 80%, 50%; --color-h: 220; --color-s: 80%; --color-l: 50%;
  *
- * Wrapper for Kirki::get_hsl_variables() static method
+ * Wrapper for Customizer::get_hsl_variables() static method
  *
  * @param string $var_name CSS variable name (without --)
  * @param string $color    Color value (hex format: #fff or #ffffff)
@@ -116,8 +116,8 @@ if ( !function_exists( 'vlt_get_config' ) ) {
  */
 if ( !function_exists( 'vlt_fw_get_hsl_variables' ) ) {
 	function vlt_fw_get_hsl_variables( $var_name, $color ) {
-		if ( class_exists( 'VLT\Framework\Modules\Integrations\Kirki' ) ) {
-			return VLT\Framework\Modules\Integrations\Kirki::get_hsl_variables( $var_name, $color );
+		if ( class_exists( 'VLT\Framework\Modules\Core\Customizer' ) ) {
+			return VLT\Framework\Modules\Core\Customizer::get_hsl_variables( $var_name, $color );
 		}
 
 		return '';
@@ -172,6 +172,28 @@ if ( !function_exists( 'vlt_fw_get_attachment_image' ) ) {
 		}
 
 		return wp_get_attachment_image( $image_id, $args['size'], false, $attrs );
+	}
+}
+
+/**
+ * Resolve a Customizer image setting (stored as a URL) back to its
+ * attachment ID, for use with vlt_fw_get_attachment_image() and similar
+ * ID-based helpers.
+ *
+ * Wrapper for Customizer::get_attachment_id_by_option() static method
+ *
+ * @param string $key     Setting key
+ * @param mixed  $default Default value if not found
+ *
+ * @return int|mixed Attachment ID, or $default if not found/resolvable
+ */
+if ( !function_exists( 'vlt_fw_get_attachment_id_by_theme_mod' ) ) {
+	function vlt_fw_get_attachment_id_by_theme_mod( $key, $default = null ) {
+		if ( class_exists( 'VLT\Framework\Modules\Core\Customizer' ) ) {
+			return VLT\Framework\Modules\Core\Customizer::get_attachment_id_by_option( $key, $default );
+		}
+
+		return $default;
 	}
 }
 
@@ -496,19 +518,19 @@ if ( !function_exists( 'vlt_fw_get_placeholder_image' ) ) {
 }
 
 /**
- * Get choices array for a specific Kirki setting
+ * Get choices array for a specific Customizer setting
  *
- * Returns the choices array (key => value pairs) for a given Kirki setting ID.
+ * Returns the choices array (key => value pairs) for a given setting ID.
  * Useful for retrieving select options, radio options, etc.
  *
- * @param string $setting_id The Kirki setting ID
+ * @param string $setting_id The setting ID
  *
  * @return array Choices array or empty array if not found
  */
 if ( !function_exists( 'vlt_fw_get_setting_choices' ) ) {
 	function vlt_fw_get_setting_choices( $setting_id ) {
-		if ( class_exists( '\VLT\Framework\Modules\Integrations\Kirki' ) ) {
-			return VLT\Framework\Modules\Integrations\Kirki::get_setting_choices( $setting_id );
+		if ( class_exists( '\VLT\Framework\Modules\Core\Customizer' ) ) {
+			return VLT\Framework\Modules\Core\Customizer::get_setting_choices( $setting_id );
 		}
 
 		return [];

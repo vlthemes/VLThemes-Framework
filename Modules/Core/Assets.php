@@ -85,7 +85,7 @@ class Assets extends BaseModule {
 		$families = array_map(
 			function ( $font ) {
 				$parts        = explode( ':', $font, 2 );
-				$font_name    = $parts[0];
+				$font_name    = str_replace( ' ', '+', trim( $parts[0] ) );
 				$font_weights = isset( $parts[1] ) ? ':' . $parts[1] : '';
 
 				return $font_name . $font_weights;

@@ -1,10 +1,10 @@
 /* ========================================
- * Kirki Custom Separator
+ * Customizer Divider Control
  * ======================================== */
-.kirki-separator {
+.customize-control-vlt-divider {
+	position: relative;
+	left: -12px;
 	padding: 10px 12px;
-	margin: 0 -12px;
-	font-weight: 700;
 	color: #555d66;
 	text-align: center;
 	text-transform: uppercase;
@@ -13,6 +13,57 @@
 	border-top: 1px solid #ddd;
 	border-bottom: 1px solid #ddd;
 	border-left: 4px solid #0073aa;
+}
+
+.vlt-divider-control__label {
+	display: block;
+	margin: 0;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.2;
+}
+
+/* ========================================
+ * Customizer Typography Control
+ * ======================================== */
+.vlt-typography-control {
+	display: block;
+}
+
+.vlt-typography-control::after {
+	content: "";
+	display: table;
+	clear: both;
+}
+
+.vlt-typography-control__family,
+.vlt-typography-control__variants {
+	float: left;
+	width: 50%;
+	box-sizing: border-box;
+	padding-right: 3px;
+}
+
+.vlt-typography-control__variants {
+	padding-right: 0;
+	padding-left: 3px;
+}
+
+.vlt-typography-control__family-select,
+.vlt-typography-control__variants-select {
+	width: 100%;
+}
+
+.vlt-typography-control__variants-select {
+	margin-top: 0;
+}
+
+.vlt-typography-control__variants-note {
+	display: block;
+	margin-top: 4px;
+	font-size: 11px;
+	font-style: italic;
+	color: #757575;
 }
 
 /* ========================================
@@ -98,9 +149,9 @@
 }
 
 /* ========================================
- * Kirki Notice
+ * Customizer Notice Control
  * ======================================== */
-.kirki-notice {
+.vlt-notice-control {
 	position: relative;
 	padding: 13px 12px 13px 40px;
 	font-size: 13px;
@@ -109,11 +160,11 @@
 	border-left: 4px solid transparent;
 }
 
-.kirki-notice > a {
+.vlt-notice-control > a {
 	text-decoration: underline;
 }
 
-.kirki-notice::before {
+.vlt-notice-control::before {
 	content: "";
 	position: absolute;
 	top: 50%;
@@ -132,46 +183,46 @@
 	speak: none;
 }
 
-.kirki-notice-info {
+.vlt-notice-control--info {
 	color: #0073aa;
 	background: #c3e2ec;
 	border-left-color: #00a0d2;
 }
 
-.kirki-notice-info::before {
+.vlt-notice-control--info::before {
 	content: "\f348";
 	color: #00a0d2;
 }
 
-.kirki-notice-success {
+.vlt-notice-control--success {
 	color: #006e2a;
 	background: #e6f5e6;
 	border-left-color: #46b450;
 }
 
-.kirki-notice-success::before {
+.vlt-notice-control--success::before {
 	content: "\f147";
 	color: #46b450;
 }
 
-.kirki-notice-warning {
+.vlt-notice-control--warning {
 	color: #b76a00;
 	background: #fff8e5;
 	border-left-color: #ffb900;
 }
 
-.kirki-notice-warning::before {
+.vlt-notice-control--warning::before {
 	content: "\f227";
 	color: #ffb900;
 }
 
-.kirki-notice-error {
+.vlt-notice-control--error {
 	color: #d63638;
 	background: #fcebeb;
 	border-left-color: #dc3232;
 }
 
-.kirki-notice-error::before {
+.vlt-notice-control--error::before {
 	content: "\f153";
 	color: #dc3232;
 }

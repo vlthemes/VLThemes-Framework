@@ -5,7 +5,6 @@ A modern, modular WordPress theme framework for building high-quality WordPress 
 ## Features
 
 - **Modular Architecture**: Clean separation of concerns with individual modules for different functionality
-- **Kirki Integration**: Advanced theme customization options
 - **Helper Functions**: Common utilities for images, content, taxonomies, and more
 - **Menu Management**: Flexible menu system with mega menu support
 - **Sidebar Management**: Dynamic sidebar registration and management
@@ -76,9 +75,6 @@ The framework uses a modular architecture with the following module types:
 ### Utils Modules (Priority 5)
 - **Helpers**: Common helper functions
 - **Sanitize**: Input sanitization utilities
-
-### Integration Modules (Priority 1)
-- **Kirki**: Kirki Customizer framework integration
 
 ### Feature Modules (Priority 20)
 - **Icons**: Icon system management
