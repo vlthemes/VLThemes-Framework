@@ -118,9 +118,27 @@ class Customizer extends BaseModule {
 		wp_add_inline_script(
 			'vlt-customizer-controls',
 			'window.vltFwCustomizerFonts = ' . wp_json_encode( $this->get_google_fonts() ) . ';'
-				. 'window.vltFwCustomizerIcons = ' . wp_json_encode( $this->get_icons() ) . ';',
+				. 'window.vltFwCustomizerIcons = ' . wp_json_encode( $this->get_icons() ) . ';'
+				. 'window.vltFwCustomizerDefaults = ' . wp_json_encode( $this->get_field_defaults() ) . ';',
 			'before'
 		);
+	}
+
+	/**
+	 * Map of settings => default value, for the reset-to-default control button
+	 */
+	private function get_field_defaults() {
+		$defaults = [];
+
+		foreach ( self::$queue['fields'] as $field ) {
+			if ( empty( $field['settings'] ) || !array_key_exists( 'default', $field ) ) {
+				continue;
+			}
+
+			$defaults[ $field['settings'] ] = $field['default'];
+		}
+
+		return $defaults;
 	}
 
 	/**
@@ -303,13 +321,18 @@ class Customizer extends BaseModule {
 	 * Native WP_Customize_Image_Control stores a URL
 	 */
 	public static function get_attachment_id_by_option( $name, $default = null ) {
-		$url = self::get_option( $name, null );
+		$value = self::get_option( $name, null );
 
-		if ( empty( $url ) ) {
+		if ( empty( $value ) ) {
 			return $default;
 		}
 
-		$id = attachment_url_to_postid( $url );
+		// Legacy Kirki-stored value (attachment ID saved directly).
+		if ( is_numeric( $value ) ) {
+			return (int) $value;
+		}
+
+		$id = attachment_url_to_postid( $value );
 
 		return $id ?: $default;
 	}

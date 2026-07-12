@@ -18,7 +18,7 @@ class AlphaColorControl extends \WP_Customize_Control {
 	public $statuses;
 
 	public function __construct( $manager, $id, $args = [] ) {
-		$this->statuses = [ '' => __( 'Default' ) ];
+		$this->statuses = [ '' => __( 'Default', '@@textdomain' ) ];
 
 		parent::__construct( $manager, $id, $args );
 	}

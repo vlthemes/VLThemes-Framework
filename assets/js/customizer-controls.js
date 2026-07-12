@@ -10,14 +10,72 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	var fonts = window.vltFwCustomizerFonts || {};
 	var icons = window.vltFwCustomizerIcons || {};
+	var defaultValues = window.vltFwCustomizerDefaults || {};
 
 	wp.customize.bind('ready', function () {
-		document.querySelectorAll('.vlt-typography-control').forEach(initTypographyControl);
+		wp.customize.control.each(function (control) {
+			control.deferred.embedded.done(function () {
+				var wrapper = control.container.find('.vlt-typography-control').get(0);
+				if (wrapper) {
+					initTypographyControl(wrapper, control);
+				}
+			});
+		});
 
 		applySectionIcons();
 		applyPanelIcons();
 		initAlphaColorPickers();
+		initResetButtons();
 	});
+
+	/* ========================================
+	 * Reset-to-default button
+	 * ======================================== */
+	function initResetButtons() {
+		wp.customize.control.each(function (control) {
+			control.deferred.embedded.done(function () {
+				addResetButton(control);
+			});
+		});
+
+		wp.customize.control.bind('add', function (control) {
+			control.deferred.embedded.done(function () {
+				addResetButton(control);
+			});
+		});
+	}
+
+	function addResetButton(control) {
+		if (!control.setting || control.container.find('.vlt-reset-control').length) {
+			return;
+		}
+
+		if (!Object.prototype.hasOwnProperty.call(defaultValues, control.id)) {
+			return;
+		}
+
+		var title = control.container.find('.customize-control-title').first();
+
+		if (!title.length) {
+			return;
+		}
+
+		var defaultValue = defaultValues[control.id];
+
+		var button = document.createElement('button');
+		button.type = 'button';
+		button.className = 'vlt-reset-control dashicons dashicons-image-rotate';
+		button.setAttribute('aria-label', 'Reset to default');
+		button.title = 'Reset to default';
+
+		button.addEventListener('click', function (e) {
+			e.preventDefault();
+			control.setting.set(defaultValue);
+		});
+
+		title.get(0).appendChild(button);
+		title.get(0).classList.add('vlt-has-reset-control');
+	}
 
 	/* ========================================
 	 * Alpha Color Picker
@@ -47,11 +105,20 @@ document.addEventListener('DOMContentLoaded', function () {
 						}, 1);
 					}
 				});
+
+				// Re-render the picker's own UI (swatch, alpha slider) when
+				// the setting changes programmatically (e.g. reset button).
+				control.setting.bind(function (newValue) {
+					if (input.val() !== newValue) {
+						input.val(newValue);
+					}
+					input.wpColorPicker('color', newValue);
+				});
 			});
 		});
 	}
 
-	function initTypographyControl(wrapper) {
+	function initTypographyControl(wrapper, control) {
 		var familySelect   = wrapper.querySelector('.vlt-typography-control__family-select');
 		var variantsSelect = wrapper.querySelector('.vlt-typography-control__variants-select');
 		var hiddenInput    = wrapper.querySelector('.vlt-typography-control__value');
@@ -79,6 +146,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
 			hiddenInput.value = value;
 			hiddenInput.dispatchEvent(new Event('change'));
+		}
+
+		// Re-render the family/variants selects when the setting changes
+		// programmatically (e.g. via the reset-to-default button).
+		if (control && control.setting) {
+			control.setting.bind(function (newValue) {
+				var parsed = {};
+
+				try {
+					parsed = JSON.parse(newValue || '{}');
+				} catch (err) {
+					parsed = {};
+				}
+
+				if (familySelect.value !== (parsed.family || '')) {
+					familySelect.value = parsed.family || '';
+				}
+
+				populateVariants(variantsSelect, parsed.family || '', parsed.variants || []);
+			});
 		}
 	}
 
