@@ -16,7 +16,40 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		applySectionIcons();
 		applyPanelIcons();
+		initAlphaColorPickers();
 	});
+
+	/* ========================================
+	 * Alpha Color Picker
+	 * (https://github.com/kallookoo/wp-color-picker-alpha)
+	 * ======================================== */
+	function initAlphaColorPickers() {
+		if (typeof jQuery === 'undefined' || !jQuery.fn.wpColorPicker) {
+			return;
+		}
+
+		wp.customize.control.each(function (control) {
+			if (control.params.type !== 'vlt-color-alpha') {
+				return;
+			}
+
+			control.deferred.embedded.done(function () {
+				var input = jQuery(control.container.find('.vlt-color-picker-alpha'));
+
+				if (!input.length || input.data('wpWpColorPicker')) {
+					return;
+				}
+
+				input.wpColorPicker({
+					change: function () {
+						setTimeout(function () {
+							input.trigger('change');
+						}, 1);
+					}
+				});
+			});
+		});
+	}
 
 	function initTypographyControl(wrapper) {
 		var familySelect   = wrapper.querySelector('.vlt-typography-control__family-select');

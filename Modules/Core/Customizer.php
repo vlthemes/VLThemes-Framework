@@ -6,6 +6,7 @@ use VLT\Framework\BaseModule;
 use VLT\Framework\Modules\Core\Controls\TypographyControl;
 use VLT\Framework\Modules\Core\Controls\DividerControl;
 use VLT\Framework\Modules\Core\Controls\NoticeControl;
+use VLT\Framework\Modules\Core\Controls\AlphaColorControl;
 
 if ( !defined( 'ABSPATH' ) ) {
 	exit;
@@ -541,6 +542,10 @@ class Customizer extends BaseModule {
 
 		switch ( $type ) {
 			case 'color':
+				if ( !empty( $args['choices']['alpha'] ) ) {
+					return new AlphaColorControl( $wp_customize, $id, $control_args );
+				}
+
 				return new \WP_Customize_Color_Control( $wp_customize, $id, $control_args );
 
 			case 'image':
@@ -580,6 +585,10 @@ class Customizer extends BaseModule {
 	private function guess_sanitize_callback( $args ) {
 		switch ( $args['type'] ?? 'text' ) {
 			case 'color':
+				if ( !empty( $args['choices']['alpha'] ) ) {
+					return [ $this, 'sanitize_alpha_color' ];
+				}
+
 				return 'sanitize_hex_color';
 
 			case 'image':
@@ -610,6 +619,32 @@ class Customizer extends BaseModule {
 	 */
 	public function sanitize_number( $value ) {
 		return is_numeric( $value ) ? $value + 0 : 0;
+	}
+
+	/**
+	 * Sanitize a color value that may include an alpha channel
+	 * (rgba(...), hsla(...), or plain hex — as produced by AlphaColorControl)
+	 */
+	public function sanitize_alpha_color( $value ) {
+		$value = trim( (string) $value );
+
+		if ( '' === $value ) {
+			return '';
+		}
+
+		if ( preg_match( '/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$/', $value ) ) {
+			return $value;
+		}
+
+		if ( preg_match( '/^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(0|1|0?\.\d+)\s*)?\)$/i', $value ) ) {
+			return $value;
+		}
+
+		if ( preg_match( '/^hsla?\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*(,\s*(0|1|0?\.\d+)\s*)?\)$/i', $value ) ) {
+			return $value;
+		}
+
+		return '';
 	}
 
 	/**
