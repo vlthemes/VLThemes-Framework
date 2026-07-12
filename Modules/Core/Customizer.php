@@ -51,6 +51,8 @@ class Customizer extends BaseModule {
 	 * consumed by Modules\Core\Assets::get_google_fonts_url()
 	 */
 	public function collect_typography_google_fonts( $fonts ) {
+		$google_fonts = array_change_key_case( $this->get_google_fonts(), CASE_LOWER );
+
 		$registered_families = array_map(
 			function ( $font ) {
 				return strtolower( trim( str_replace( '+', ' ', explode( ':', $font, 2 )[0] ) ) );
@@ -66,6 +68,13 @@ class Customizer extends BaseModule {
 			$value = json_decode( (string) self::get_option( $field['settings'] ), true );
 
 			if ( empty( $value['family'] ) ) {
+				continue;
+			}
+
+			// Only queue families that are actually Google Fonts — custom,
+			// TypeKit, or theme-registered fonts are not served from
+			// fonts.googleapis.com and must not be requested from there.
+			if ( !isset( $google_fonts[ strtolower( trim( $value['family'] ) ) ] ) ) {
 				continue;
 			}
 
@@ -117,11 +126,26 @@ class Customizer extends BaseModule {
 
 		wp_add_inline_script(
 			'vlt-customizer-controls',
-			'window.vltFwCustomizerFonts = ' . wp_json_encode( $this->get_google_fonts() ) . ';'
+			'window.vltFwCustomizerFonts = ' . wp_json_encode( $this->get_typography_control_fonts() ) . ';'
 				. 'window.vltFwCustomizerIcons = ' . wp_json_encode( $this->get_icons() ) . ';'
 				. 'window.vltFwCustomizerDefaults = ' . wp_json_encode( $this->get_field_defaults() ) . ';',
 			'before'
 		);
+	}
+
+	/**
+	 * Flatten TypographyControl's grouped font list (Google + toolkit fonts)
+	 * into family => {family, category, variants, source}, for the JS-side
+	 * variants lookup in the typography control.
+	 */
+	private function get_typography_control_fonts() {
+		$fonts = [];
+
+		foreach ( TypographyControl::get_font_groups() as $group ) {
+			$fonts = array_merge( $fonts, $group['fonts'] );
+		}
+
+		return $fonts;
 	}
 
 	/**

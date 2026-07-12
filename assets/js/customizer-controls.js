@@ -119,25 +119,28 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	function initTypographyControl(wrapper, control) {
-		var familySelect   = wrapper.querySelector('.vlt-typography-control__family-select');
-		var variantsSelect = wrapper.querySelector('.vlt-typography-control__variants-select');
-		var hiddenInput    = wrapper.querySelector('.vlt-typography-control__value');
+		var familySelect    = wrapper.querySelector('.vlt-typography-control__family-select');
+		var variantsWrapper = wrapper.querySelector('.vlt-typography-control__variants');
+		var variantsSelect  = wrapper.querySelector('.vlt-typography-control__variants-select');
+		var hiddenInput     = wrapper.querySelector('.vlt-typography-control__value');
 
-		if (!familySelect || !variantsSelect || !hiddenInput) {
+		if (!familySelect || !variantsWrapper || !variantsSelect || !hiddenInput) {
 			return;
 		}
 
 		familySelect.addEventListener('change', function () {
-			populateVariants(variantsSelect, familySelect.value, []);
+			populateVariants(variantsWrapper, variantsSelect, familySelect.value, []);
 			updateValue();
 		});
 
 		variantsSelect.addEventListener('change', updateValue);
 
 		function updateValue() {
-			var selectedVariants = Array.prototype.slice
-				.call(variantsSelect.selectedOptions)
-				.map(function (option) { return option.value; });
+			var isGoogle = isGoogleFont(familySelect.value);
+
+			var selectedVariants = isGoogle
+				? Array.prototype.slice.call(variantsSelect.selectedOptions).map(function (option) { return option.value; })
+				: [];
 
 			var value = JSON.stringify({
 				family: familySelect.value,
@@ -164,13 +167,25 @@ document.addEventListener('DOMContentLoaded', function () {
 					familySelect.value = parsed.family || '';
 				}
 
-				populateVariants(variantsSelect, parsed.family || '', parsed.variants || []);
+				populateVariants(variantsWrapper, variantsSelect, parsed.family || '', parsed.variants || []);
 			});
 		}
 	}
 
-	function populateVariants(select, family, selected) {
-		var variants = (fonts[family] && fonts[family].variants) || [];
+	function isGoogleFont(family) {
+		return !family || (fonts[family] && fonts[family].source) === 'google' || !(fonts[family] && fonts[family].source);
+	}
+
+	function allVariants(family) {
+		return (fonts[family] && fonts[family].variants) || [];
+	}
+
+	function populateVariants(wrapper, select, family, selected) {
+		var isGoogle = isGoogleFont(family);
+
+		wrapper.style.display = isGoogle ? '' : 'none';
+
+		var variants = isGoogle ? allVariants(family) : [];
 
 		select.innerHTML = '';
 
