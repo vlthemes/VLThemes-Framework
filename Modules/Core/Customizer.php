@@ -570,6 +570,10 @@ class Customizer extends BaseModule {
 			$control_args['choices'] = $args['choices'];
 		}
 
+		if ( !empty( $args['input_attrs'] ) && is_array( $args['input_attrs'] ) ) {
+			$control_args['input_attrs'] = $args['input_attrs'];
+		}
+
 		if ( isset( $args['active_callback'] ) ) {
 			$control_args['active_callback'] = function () use ( $args, $wp_customize ) {
 				return $this->evaluate_active_callback( $args['active_callback'], $wp_customize );
@@ -596,8 +600,10 @@ class Customizer extends BaseModule {
 				return new \WP_Customize_Color_Control( $wp_customize, $id, $control_args );
 
 			case 'image':
-			case 'upload':
 				return new \WP_Customize_Image_Control( $wp_customize, $id, $control_args );
+
+			case 'upload':
+				return new \WP_Customize_Upload_Control( $wp_customize, $id, $control_args );
 
 			case 'typography':
 				return new TypographyControl( $wp_customize, $id, $control_args );

@@ -63,7 +63,7 @@ class TypographyControl extends \WP_Customize_Control {
 				</select>
 			</span>
 
-			<span class="vlt-typography-control__variants" <?php echo $is_google ? '' : 'style="display:none;"'; ?>>
+			<span class="vlt-typography-control__variants" style="<?php echo esc_attr( $is_google ? '' : 'display:none;' ); ?>">
 				<select multiple class="vlt-typography-control__variants-select" size="6">
 					<?php
 					$available_variants = $fonts[ $family ]['variants'] ?? [];

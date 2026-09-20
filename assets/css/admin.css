@@ -10,6 +10,29 @@
 }
 
 /* ========================================
+ * Color Control Button
+ * ======================================== */
+
+.customize-control .wp-picker-container {
+	display: block;
+}
+
+.customize-control .wp-picker-container .wp-color-result.button {
+	display: flex;
+	align-items: stretch;
+	width: 100%;
+	min-height: 40px;
+	padding: 0 0 0 40px;
+}
+
+.customize-control .wp-picker-container .wp-color-result-text {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+}
+
+/* ========================================
  * Reset-to-default Control Button
  * ======================================== */
 .vlt-has-reset-control {
@@ -57,14 +80,11 @@
 .customize-control-vlt-divider {
 	position: relative;
 	left: -12px;
-	padding: 10px 12px;
-	color: #555d66;
-	text-align: center;
-	text-transform: uppercase;
-	letter-spacing: 2px;
+	padding: 10px 14px 11px 14px;
+	color: #50575e;
 	background-color: #fff;
-	border-top: 1px solid #ddd;
-	border-bottom: 1px solid #ddd;
+	border-top: 1px solid #dcdcde;
+	border-bottom: 1px solid #dcdcde;
 	border-left: 4px solid var(--wp-admin-theme-color, #0073aa);
 }
 
@@ -73,7 +93,7 @@
 	margin: 0;
 	font-size: 14px;
 	font-weight: 600;
-	line-height: 1.2;
+	line-height: 1.55;
 }
 
 /* ========================================
@@ -86,8 +106,8 @@
 .vlt-typography-control__family,
 .vlt-typography-control__variants {
 	display: block;
-	box-sizing: border-box;
 	width: 100%;
+	box-sizing: border-box;
 }
 
 .vlt-typography-control__family {
