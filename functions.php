@@ -56,6 +56,17 @@ if ( !function_exists( 'vlt_fw' ) ) {
 }
 
 /**
+ * Is the theme activated with a license (Appearance → Theme License)
+ *
+ * @return bool
+ */
+if ( !function_exists( 'vlt_fw_is_license_active' ) ) {
+	function vlt_fw_is_license_active() {
+		return class_exists( 'VLT\Framework\Modules\Features\License' ) && VLT\Framework\Modules\Features\License::is_active();
+	}
+}
+
+/**
  * Get specific framework module
  *
  * @param string $module_name Module name

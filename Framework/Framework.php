@@ -340,6 +340,13 @@ final class Framework {
 				'required' => false,
 				'enabled'  => $this->get_config( 'modules.icons', true ),
 				'priority' => 20
+			],
+
+			'license' => [
+				'class'    => 'Modules\\Features\\License',
+				'required' => false,
+				'enabled'  => $this->get_config( 'modules.license', false ),
+				'priority' => 20
 			]
 		];
 
