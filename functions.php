@@ -75,7 +75,7 @@ if ( !function_exists( 'vlt_fw_is_license_active' ) ) {
  */
 if ( !function_exists( 'vlt_fw_get_module' ) ) {
 	function vlt_fw_get_module( $module_name ) {
-		$framework = vlt_framework();
+		$framework = vlt_fw();
 
 		return $framework ? $framework->get_module( $module_name ) : null;
 	}
@@ -90,7 +90,7 @@ if ( !function_exists( 'vlt_fw_get_module' ) ) {
  */
 if ( !function_exists( 'vlt_fw_has_module' ) ) {
 	function vlt_fw_has_module( $module_name ) {
-		$framework = vlt_framework();
+		$framework = vlt_fw();
 
 		return $framework ? $framework->has_module( $module_name ) : false;
 	}
@@ -106,7 +106,7 @@ if ( !function_exists( 'vlt_fw_has_module' ) ) {
  */
 if ( !function_exists( 'vlt_get_config' ) ) {
 	function vlt_fw_get_config( $key, $default = null ) {
-		$framework = vlt_framework();
+		$framework = vlt_fw();
 
 		return $framework ? $framework->get_config( $key, $default ) : $default;
 	}
@@ -138,8 +138,7 @@ if ( !function_exists( 'vlt_fw_get_hsl_variables' ) ) {
 /**
  * Get attachment image with lazy loading support
  *
- * Enhanced wrapper for wp_get_attachment_image() with framework Image helper.
- * Supports custom image sizes and automatic lazy loading.
+ * wp_get_attachment_image() with Elementor's custom size; lazy loading is left to WordPress.
  *
  * Wrapper for Image::get_attachment_image() static method
  *
@@ -155,34 +154,7 @@ if ( !function_exists( 'vlt_fw_get_hsl_variables' ) ) {
  */
 if ( !function_exists( 'vlt_fw_get_attachment_image' ) ) {
 	function vlt_fw_get_attachment_image( $image_id, $args = [] ) {
-		if ( function_exists( 'vlt_toolkit_get_attachment_image' ) ) {
-			return vlt_toolkit_get_attachment_image( $image_id, $args );
-		}
-
-		// Fallback: basic implementation via wp_get_attachment_image
-		if ( empty( $image_id ) ) {
-			return false;
-		}
-
-		$defaults = [
-			'size'      => 'full',
-			'class'     => '',
-			'lazy_load' => true,
-		];
-
-		$args = wp_parse_args( $args, $defaults );
-
-		$attrs = [];
-
-		if ( $args['lazy_load'] ) {
-			$attrs['loading'] = 'lazy';
-		}
-
-		if ( !empty( $args['class'] ) ) {
-			$attrs['class'] = trim( $args['class'] );
-		}
-
-		return wp_get_attachment_image( $image_id, $args['size'], false, $attrs );
+		return VLT\Framework\Modules\Utils\Image::get_attachment_image( $image_id, $args );
 	}
 }
 
@@ -225,28 +197,7 @@ if ( !function_exists( 'vlt_fw_get_attachment_id_by_theme_mod' ) ) {
  */
 if ( !function_exists( 'vlt_fw_get_attachment_image_src' ) ) {
 	function vlt_fw_get_attachment_image_src( $image_id, $args = [] ) {
-		if ( function_exists( 'vlt_toolkit_get_attachment_image_src' ) ) {
-			return vlt_toolkit_get_attachment_image_src( $image_id, $args );
-		}
-
-		// Fallback: basic implementation
-		if ( empty( $image_id ) ) {
-			return false;
-		}
-
-		$defaults = [
-			'size' => 'full',
-		];
-
-		$args = wp_parse_args( $args, $defaults );
-
-		$image_src = wp_get_attachment_image_src( $image_id, $args['size'] );
-
-		if ( !$image_src ) {
-			return false;
-		}
-
-		return $image_src[0];
+		return VLT\Framework\Modules\Utils\Image::get_attachment_image_src( $image_id, $args );
 	}
 }
 
@@ -402,8 +353,8 @@ if ( !function_exists( 'vlt_fw_nav_breakpoint' ) ) {
 /**
  * Get SVG icon markup
  *
- * Retrieves SVG icon(s) from framework icon registry.
- * Icons are registered via 'vlt_fw_icons' filter.
+ * Icons are registered with the 'vlt_fw_icons' filter and printed once as an SVG sprite by vlt_fw_body_open();
+ * the markup is a <use> reference to it.
  * Supports both single icon (string) and multiple icons (array).
  *
  * Wrapper for Icons::get() static method
@@ -504,27 +455,23 @@ if ( !function_exists( 'vlt_fw_get_field' ) ) {
 
 /**
  * Get placeholder image source URL
+ *
+ * Wrapper for Image::get_placeholder_image_src() static method
  */
 if ( !function_exists( 'vlt_fw_get_placeholder_image_src' ) ) {
 	function vlt_fw_get_placeholder_image_src() {
-		if ( function_exists( 'vlt_toolkit_get_placeholder_image_src' ) ) {
-			return vlt_toolkit_get_placeholder_image_src();
-		}
-
-		return '';
+		return VLT\Framework\Modules\Utils\Image::get_placeholder_image_src();
 	}
 }
 
 /**
  * Get placeholder image HTML
+ *
+ * Wrapper for Image::get_placeholder_image() static method
  */
 if ( !function_exists( 'vlt_fw_get_placeholder_image' ) ) {
 	function vlt_fw_get_placeholder_image( $class = '', $alt = '' ) {
-		if ( function_exists( 'vlt_toolkit_get_placeholder_image' ) ) {
-			return vlt_toolkit_get_placeholder_image( $class, $alt );
-		}
-
-		return '';
+		return VLT\Framework\Modules\Utils\Image::get_placeholder_image( $class, $alt );
 	}
 }
 

@@ -7,6 +7,7 @@ use VLT\Framework\Modules\Core\Controls\TypographyControl;
 use VLT\Framework\Modules\Core\Controls\DividerControl;
 use VLT\Framework\Modules\Core\Controls\NoticeControl;
 use VLT\Framework\Modules\Core\Controls\AlphaColorControl;
+use VLT\Framework\Modules\Core\Controls\RepeaterControl;
 
 if ( !defined( 'ABSPATH' ) ) {
 	exit;
@@ -551,7 +552,7 @@ class Customizer extends BaseModule {
 		$wp_customize->add_setting(
 			$id,
 			[
-				'default'           => $args['default'] ?? '',
+				'default'           => $args['default'] ?? ( 'repeater' === ( $args['type'] ?? '' ) ? [] : '' ),
 				'type'              => $args['option_type'] ?? 'theme_mod',
 				'capability'        => $args['capability'] ?? 'edit_theme_options',
 				'transport'         => ( $args['transport'] ?? 'auto' ) === 'auto' ? 'refresh' : $args['transport'],
@@ -572,6 +573,11 @@ class Customizer extends BaseModule {
 
 		if ( !empty( $args['input_attrs'] ) && is_array( $args['input_attrs'] ) ) {
 			$control_args['input_attrs'] = $args['input_attrs'];
+		}
+
+		// 'ai' => true: the field offers the AI assistant of VLThemes Toolkit (text and textarea only)
+		if ( !empty( $args['ai'] ) && in_array( $args['type'] ?? 'text', [ 'text', 'textarea' ], true ) ) {
+			$control_args['input_attrs']['data-vlt-ai'] = '';
 		}
 
 		if ( isset( $args['active_callback'] ) ) {
@@ -607,6 +613,13 @@ class Customizer extends BaseModule {
 
 			case 'typography':
 				return new TypographyControl( $wp_customize, $id, $control_args );
+
+			case 'repeater':
+				$control_args['fields']       = $args['fields'] ?? [];
+				$control_args['row_label']    = $args['row_label'] ?? [];
+				$control_args['button_label'] = $args['button_label'] ?? '';
+
+				return new RepeaterControl( $wp_customize, $id, $control_args );
 
 			case 'select':
 			case 'dropdown-pages':
@@ -662,6 +675,13 @@ class Customizer extends BaseModule {
 			case 'typography':
 				return [ $this, 'sanitize_typography' ];
 
+			case 'repeater':
+				$fields = $args['fields'] ?? [];
+
+				return function ( $value ) use ( $fields ) {
+					return $this->sanitize_repeater( $value, $fields );
+				};
+
 			default:
 				return 'sanitize_text_field';
 		}
@@ -716,6 +736,56 @@ class Customizer extends BaseModule {
 			: [];
 
 		return wp_json_encode( [ 'family' => $family, 'variants' => $variants ] );
+	}
+
+	/**
+	 * Sanitize a repeater value: keep only declared sub-fields and
+	 * sanitize each one by its type
+	 */
+	public function sanitize_repeater( $value, $fields ) {
+		$rows = [];
+
+		foreach ( RepeaterControl::normalize_value( $value ) as $row ) {
+			$clean = [];
+
+			foreach ( $fields as $key => $field ) {
+				$raw = $row[ $key ] ?? '';
+
+				if ( !is_scalar( $raw ) ) {
+					$raw = '';
+				}
+
+				switch ( $field['type'] ?? 'text' ) {
+					case 'image':
+						$clean[ $key ] = $raw ? absint( $raw ) : '';
+
+						break;
+
+					case 'url':
+					case 'link':
+						$clean[ $key ] = esc_url_raw( $raw );
+
+						break;
+
+					case 'textarea':
+						$clean[ $key ] = sanitize_textarea_field( $raw );
+
+						break;
+
+					case 'select':
+						$clean[ $key ] = isset( $field['choices'][ $raw ] ) ? (string) $raw : '';
+
+						break;
+
+					default:
+						$clean[ $key ] = sanitize_text_field( $raw );
+				}
+			}
+
+			$rows[] = $clean;
+		}
+
+		return $rows;
 	}
 
 	/**

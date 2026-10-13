@@ -279,6 +279,13 @@ final class Framework {
 				'priority' => 2
 			],
 
+			'image' => [
+				'class'    => 'Modules\\Utils\\Image',
+				'required' => true,
+				'enabled'  => $this->get_config( 'modules.image', true ),
+				'priority' => 5
+			],
+
 			'helpers' => [
 				'class'    => 'Modules\\Utils\\Helpers',
 				'required' => true,

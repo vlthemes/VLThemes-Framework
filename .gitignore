@@ -14,4 +14,4 @@
 node_modules/
 
 # Composer vendor (if any)
-vendor/
+/vendor/

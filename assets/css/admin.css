@@ -132,6 +132,85 @@
 }
 
 /* ========================================
+ * Customizer Repeater Control
+ * ======================================== */
+.vlt-repeater-control__rows {
+	margin: 0 0 12px;
+}
+
+.vlt-repeater-row {
+	margin: 0 0 8px;
+	background-color: #fff;
+	border: 1px solid #dcdcde;
+}
+
+.vlt-repeater-row__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 12px;
+	font-weight: 600;
+	cursor: move;
+	user-select: none;
+}
+
+.vlt-repeater-row__title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.vlt-repeater-row__toggle {
+	color: #787c82;
+	cursor: pointer;
+	transition: transform .1s ease-in-out;
+}
+
+.vlt-repeater-row.is-collapsed .vlt-repeater-row__toggle {
+	transform: rotate(-90deg);
+}
+
+.vlt-repeater-row__body {
+	padding: 12px;
+	border-top: 1px solid #dcdcde;
+}
+
+.vlt-repeater-row.is-collapsed .vlt-repeater-row__body {
+	display: none;
+}
+
+.vlt-repeater-field {
+	margin-bottom: 12px;
+}
+
+.vlt-repeater-image {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+}
+
+.vlt-repeater-image__preview:empty {
+	display: none;
+}
+
+.vlt-repeater-image__preview {
+	width: 100%;
+}
+
+.vlt-repeater-image__preview img {
+	display: block;
+	max-width: 100%;
+	max-height: 120px;
+}
+
+.vlt-repeater-row .ui-sortable-placeholder {
+	visibility: visible !important;
+	background-color: #f0f0f1;
+	border: 1px dashed #c3c4c7;
+}
+
+/* ========================================
  * Post Format Icons (Dashicons)
  * ======================================== */
 .format-quote .title:before,
