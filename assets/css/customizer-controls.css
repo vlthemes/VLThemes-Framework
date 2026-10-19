@@ -195,8 +195,9 @@ body[data-vlt-device="mobile"] .vlt-device-control:not(.vlt-device-control--mobi
 	transition: color .15s, border-color .15s;
 }
 
+/* A number without a unit: no label, no separator (over .is-static below) */
 .vlt-value__unit[hidden] {
-	display: none;
+	display: none !important;
 }
 
 .vlt-value__box:hover .vlt-value__unit,
