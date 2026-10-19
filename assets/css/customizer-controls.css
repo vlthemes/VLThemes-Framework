@@ -1,0 +1,331 @@
+/* ========================================
+ * Customizer controls: the changed dot, the device switch, the value field (assets/js/customizer-controls.js)
+ * ======================================== */
+#customize-controls,
+.vlt-value__menu {
+	--vlt-accent: var(--wp-admin-theme-color, #3858e9);
+	--vlt-text: #1e1e1e;
+	--vlt-muted: #757575;
+	--vlt-border: #949494;
+	--vlt-border-strong: #1e1e1e;
+	--vlt-divider: #dcdcde;
+	--vlt-surface: #ffffff;
+	--vlt-muted-bg: #f0f0f0;
+	--vlt-radius: 4px;
+}
+
+/* ========================================
+ * Label row: label, device switch, dot
+ * ======================================== */
+.vlt-control-title {
+	display: flex !important;
+	gap: 6px;
+	align-items: center;
+}
+
+.customize-inside-control-row > label.vlt-control-title {
+	display: inline-flex !important;
+}
+
+/* The value is not the default */
+.vlt-changed-dot {
+	flex: none;
+	width: 6px;
+	height: 6px;
+	background: var(--vlt-accent);
+	border-radius: 50%;
+}
+
+.vlt-changed-dot[hidden] {
+	display: none;
+}
+
+/* Reset to default: while the value is changed, shown on hover */
+.vlt-reset-control {
+	display: flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	margin-left: auto;
+	color: var(--vlt-muted);
+	cursor: pointer;
+	background: none;
+	border: 0;
+	border-radius: 2px;
+	opacity: 0;
+	transition: opacity .1s ease-in-out, color .1s ease-in-out;
+}
+
+.vlt-reset-control[hidden] {
+	display: none;
+}
+
+.vlt-reset-control::before {
+	font-size: 16px;
+	line-height: 1;
+}
+
+.customize-control:hover .vlt-reset-control,
+.vlt-reset-control:focus-visible {
+	opacity: 1;
+}
+
+.vlt-reset-control:hover {
+	color: var(--vlt-accent);
+}
+
+/* ========================================
+ * Device switch of responsive fields
+ * ======================================== */
+.vlt-devices {
+	display: inline-flex;
+	flex: none;
+	gap: 2px;
+	align-items: center;
+}
+
+.vlt-devices__item {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	color: var(--vlt-muted);
+	cursor: pointer;
+	background: none;
+	border: 0;
+	border-radius: 3px;
+	transition: color .15s, background-color .15s;
+}
+
+.vlt-devices__item svg {
+	width: 14px;
+	height: 14px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.8;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.vlt-devices__item:hover {
+	color: var(--vlt-text);
+}
+
+.vlt-devices__item.is-active {
+	color: var(--vlt-accent);
+	background: color-mix(in oklab, var(--vlt-accent) 10%, transparent);
+}
+
+/* The field of the device being previewed only */
+body[data-vlt-device="desktop"] .vlt-device-control:not(.vlt-device-control--desktop),
+body[data-vlt-device="tablet"] .vlt-device-control:not(.vlt-device-control--tablet),
+body[data-vlt-device="mobile"] .vlt-device-control:not(.vlt-device-control--mobile) {
+	display: none !important;
+}
+
+/* ========================================
+ * Value field
+ * ======================================== */
+.vlt-value {
+	position: relative;
+}
+
+.vlt-value__box {
+	box-sizing: border-box;
+	display: flex;
+	align-items: stretch;
+	height: 40px;
+	overflow: hidden;
+	background: var(--vlt-surface);
+	border: 1px solid var(--vlt-border);
+	border-radius: var(--vlt-radius);
+	transition: border-color .15s, box-shadow .15s;
+}
+
+.vlt-value__box:hover {
+	border-color: var(--vlt-border-strong);
+}
+
+.vlt-value__box:focus-within {
+	border-color: var(--vlt-accent);
+	box-shadow: 0 0 0 .5px var(--vlt-accent);
+}
+
+.vlt-value__box.is-disabled {
+	background: var(--vlt-muted-bg);
+}
+
+/* The admin's input[type=text] rule (border, radius, blue focus) loses to these */
+#customize-controls input.vlt-value__input,
+#customize-controls input.vlt-value__input:focus {
+	flex: 1;
+	min-width: 0;
+	min-height: 0;
+	padding: 0 12px;
+	margin: 0;
+	font-size: 14px;
+	color: var(--vlt-text);
+	background: transparent;
+	border: 0;
+	border-radius: 0;
+	outline: none;
+	box-shadow: none;
+}
+
+#customize-controls input.vlt-value__input::placeholder {
+	color: var(--vlt-muted);
+}
+
+/* The separator shows on hover and focus */
+.vlt-value__unit {
+	flex: none;
+	padding: 0 12px;
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--vlt-muted);
+	cursor: pointer;
+	background: transparent;
+	border: 0;
+	border-left: 1px solid transparent;
+	transition: color .15s, border-color .15s;
+}
+
+.vlt-value__unit[hidden] {
+	display: none;
+}
+
+.vlt-value__box:hover .vlt-value__unit,
+.vlt-value__box:focus-within .vlt-value__unit {
+	color: var(--vlt-text);
+	border-left-color: var(--vlt-divider);
+}
+
+.vlt-value__unit.is-static {
+	display: flex;
+	align-items: center;
+	cursor: default;
+}
+
+/* Unit menu: in the body, placed on the unit button by the script */
+.vlt-value__menu {
+	position: fixed;
+	z-index: 500001;
+	box-sizing: border-box;
+	min-width: 140px;
+	max-height: 260px;
+	padding: 6px 0;
+	overflow-y: auto;
+	background: var(--vlt-surface);
+	border: 1px solid var(--vlt-divider);
+	border-radius: var(--vlt-radius);
+	box-shadow: 0 4px 16px color-mix(in oklab, #000000 12%, transparent);
+}
+
+.vlt-value__menu[hidden] {
+	display: none;
+}
+
+.vlt-value__menu-group + .vlt-value__menu-group {
+	padding-top: 4px;
+	margin-top: 4px;
+	border-top: 1px solid var(--vlt-divider);
+}
+
+.vlt-value__menu-label {
+	padding: 6px 12px 4px;
+	font-size: 10px;
+	font-weight: 500;
+	color: var(--vlt-muted);
+	text-transform: uppercase;
+	letter-spacing: .05em;
+}
+
+.vlt-value__menu-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	padding: 6px 12px;
+	font-family: inherit;
+	font-size: 13px;
+	color: var(--vlt-text);
+	text-align: left;
+	cursor: pointer;
+	background: none;
+	border: 0;
+}
+
+.vlt-value__menu-item:hover,
+.vlt-value__menu-item:focus-visible {
+	background: var(--vlt-muted-bg);
+	outline: none;
+}
+
+.vlt-value__menu-item.is-active {
+	font-weight: 600;
+}
+
+.vlt-value__menu-item.is-active::after {
+	content: "✓";
+	font-size: 11px;
+	color: var(--vlt-accent);
+}
+
+/* Ruler under the field, shown while the field is hovered or dragged */
+.vlt-value__ruler {
+	display: flex;
+	align-items: center;
+	height: 14px;
+	margin-top: 4px;
+	visibility: hidden;
+	opacity: 0;
+	transition: opacity .2s, visibility .2s;
+}
+
+.vlt-value__ruler[hidden] {
+	display: none;
+}
+
+.vlt-value:hover .vlt-value__ruler,
+.vlt-value.is-dragging .vlt-value__ruler {
+	visibility: visible;
+	opacity: 1;
+}
+
+/* A whole-pixel width: the track then starts on a pixel and its ticks stay sharp */
+.vlt-value__step {
+	flex: none;
+	width: 16px;
+	padding: 0;
+	font-size: 8px;
+	line-height: 1;
+	color: var(--vlt-muted);
+	cursor: pointer;
+	background: none;
+	border: 0;
+}
+
+.vlt-value__step:hover {
+	color: var(--vlt-text);
+}
+
+.vlt-value__track {
+	flex: 1;
+	height: 10px;
+	margin: 0 4px;
+	cursor: ew-resize;
+	touch-action: none;
+	background-image: linear-gradient(to right, #cccccc 2px, transparent 2px);
+	background-size: 5px 100%;
+	-webkit-mask-image: linear-gradient(to right, transparent, #000000 20%, #000000 80%, transparent);
+	mask-image: linear-gradient(to right, transparent, #000000 20%, #000000 80%, transparent);
+}
+
+.vlt-value__track:active {
+	cursor: grabbing;
+}

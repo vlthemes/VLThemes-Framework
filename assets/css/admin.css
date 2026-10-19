@@ -33,48 +33,6 @@
 }
 
 /* ========================================
- * Reset-to-default Control Button
- * ======================================== */
-.vlt-has-reset-control {
-	position: relative;
-	padding-right: 22px !important;
-}
-
-.vlt-reset-control {
-	position: absolute;
-	top: 50%;
-	right: 0;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 20px;
-	height: 20px;
-	padding: 0;
-	color: #757575;
-	cursor: pointer;
-	background: none;
-	border: none;
-	border-radius: 2px;
-	opacity: 0;
-	transform: translateY(-50%);
-	transition: opacity .1s ease-in-out;
-}
-
-.vlt-reset-control::before {
-	font-size: 16px;
-	line-height: 1;
-}
-
-.vlt-has-reset-control:hover .vlt-reset-control,
-.vlt-reset-control:focus {
-	opacity: 1;
-}
-
-.vlt-reset-control:hover {
-	color: var(--wp-admin-theme-color, #0073aa);
-}
-
-/* ========================================
  * Customizer Divider Control
  * ======================================== */
 .customize-control-vlt-divider {

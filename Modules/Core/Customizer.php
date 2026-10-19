@@ -8,6 +8,7 @@ use VLT\Framework\Modules\Core\Controls\DividerControl;
 use VLT\Framework\Modules\Core\Controls\NoticeControl;
 use VLT\Framework\Modules\Core\Controls\AlphaColorControl;
 use VLT\Framework\Modules\Core\Controls\RepeaterControl;
+use VLT\Framework\Modules\Core\Controls\ValueControl;
 
 if ( !defined( 'ABSPATH' ) ) {
 	exit;
@@ -15,10 +16,51 @@ if ( !defined( 'ABSPATH' ) ) {
 
 /**
  * Native WordPress Customizer Integration Module
+ *
+ * Fields are queued with Customizer::add_field(). Besides the WordPress control args a field takes:
+ *
+ *     Customizer::add_field( [
+ *         'type'       => 'dimension',
+ *         'settings'   => 'header_logo_height',
+ *         'section'    => 'section_header_general',
+ *         'label'      => esc_html__( 'Logo Height', '@@textdomain' ),
+ *         'default'    => [ 'desktop' => '18px', 'mobile' => '16px' ],
+ *         'units'      => [ 'px', 'rem' ],
+ *         'responsive' => true,
+ *         'style'      => [ [ 'element' => '.vlt-navbar-logo img', 'property' => 'height' ] ],
+ *     ] );
+ *
+ * - dimension: a CSS value, '18px', '80vh', '300ms' ('units' => [ 'px', 'vh' ], 'functions' => true for clamp() /
+ *   min() / max() / calc() / var() or a list of them, e.g. [ 'var' ], 'keywords' => [ 'auto' ]).
+ * - number: a number (min, max, step or input_attrs; 'unit' => 'px' shown next to it and added in the CSS,
+ *   'units' => [ 'ms', 's' ] for a time kept in ms).
+ * - responsive: one value per device of the preview (desktop, tablet, mobile), switched with the device buttons
+ *   of the label. Tablet and mobile are saved as "{settings}_tablet" and "{settings}_mobile"; an empty one follows
+ *   the wider device. The default is a value (desktop) or [ device => value ].
+ * - style: [ element, property, mask ] rules, the CSS of the field (wp_head, live in the preview). Mask defaults
+ *   to "$" (the value); a mask without "$" is printed as it is while the field has a value. Tablet and mobile go
+ *   into @media (max-width) of Customizer::get_breakpoints(). Fields hidden by their active_callback print none.
+ *
+ * A field whose value is not the default shows a dot by its label and, on hover, a reset button.
  */
 class Customizer extends BaseModule {
 	protected $name    = 'customizer';
 	protected $version = '1.0.0';
+
+	/**
+	 * Devices of the preview, widest first: a device without a value follows the wider one
+	 */
+	const DEVICES = [ 'desktop', 'tablet', 'mobile' ];
+
+	/**
+	 * CSS functions a dimension field can offer
+	 */
+	const FUNCTIONS = [ 'clamp', 'min', 'max', 'calc', 'var' ];
+
+	/**
+	 * CSS lengths a dimension field takes when it names none
+	 */
+	const UNITS = [ 'px', '%', 'em', 'rem', 'vw', 'vh' ];
 
 	private static $queue            = [
 		'panels'   => [],
@@ -27,6 +69,20 @@ class Customizer extends BaseModule {
 	];
 	private static $default_options  = [];
 	private static $registered_choices = [];
+
+	/**
+	 * Fields with style rules [ settings => field ]
+	 *
+	 * @var array
+	 */
+	private static $styled = [];
+
+	/**
+	 * Device fields [ settings => [ 'field' => desktop settings, 'device' => device ] ]
+	 *
+	 * @var array
+	 */
+	private static $devices = [];
 
 	/**
 	 * Register module
@@ -43,6 +99,7 @@ class Customizer extends BaseModule {
 		add_action( 'wp_head', [ $this, 'output_dynamic_css' ], 100 );
 
 		add_action( 'customize_controls_enqueue_scripts', [ $this, 'enqueue_control_assets' ] );
+		add_action( 'customize_preview_init', [ $this, 'enqueue_preview_assets' ] );
 
 		add_filter( 'vlt_fw_google_fonts', [ $this, 'collect_typography_google_fonts' ] );
 	}
@@ -117,6 +174,13 @@ class Customizer extends BaseModule {
 	 * Enqueue assets for custom controls (typography, divider)
 	 */
 	public function enqueue_control_assets() {
+		wp_enqueue_style(
+			'vlt-customizer-controls',
+			VLT_FW_URL . 'assets/css/customizer-controls.css',
+			[],
+			$this->version
+		);
+
 		wp_enqueue_script(
 			'vlt-customizer-controls',
 			VLT_FW_URL . 'assets/js/customizer-controls.js',
@@ -129,8 +193,65 @@ class Customizer extends BaseModule {
 			'vlt-customizer-controls',
 			'window.vltFwCustomizerFonts = ' . wp_json_encode( $this->get_typography_control_fonts() ) . ';'
 				. 'window.vltFwCustomizerIcons = ' . wp_json_encode( $this->get_icons() ) . ';'
-				. 'window.vltFwCustomizerDefaults = ' . wp_json_encode( $this->get_field_defaults() ) . ';',
+				. 'window.vltFwCustomizerDefaults = ' . wp_json_encode( $this->get_field_defaults() ) . ';'
+				. 'window.vltFwCustomizerDevices = ' . wp_json_encode( self::$devices ) . ';',
 			'before'
+		);
+
+		// The tablet preview as wide as the tablet breakpoint starts (WordPress shows 720px, a mobile width here)
+		$tablet_width = self::get_breakpoints()['mobile'] + 1;
+
+		wp_add_inline_style(
+			'vlt-customizer-controls',
+			sprintf( '.wp-full-overlay.preview-tablet .wp-full-overlay-main{width:%1$dpx;margin-left:-%2$dpx}', $tablet_width, $tablet_width / 2 )
+		);
+	}
+
+	/**
+	 * Preview: the CSS of the fields with style rules, rebuilt as they change
+	 */
+	public function enqueue_preview_assets() {
+		wp_enqueue_script(
+			'vlt-customizer-preview',
+			VLT_FW_URL . 'assets/js/customizer-preview.js',
+			[ 'customize-preview' ],
+			$this->version,
+			true
+		);
+
+		$fields = [];
+
+		foreach ( self::$styled as $id => $field ) {
+			$fields[ $id ] = [
+				'type'       => $field['type'] ?? 'text',
+				'unit'       => self::number_units( $field )[0],
+				'units'      => self::dimension_units( $field ),
+				'keywords'   => self::dimension_keywords( $field ),
+				'responsive' => !empty( $field['responsive'] ),
+				'style'      => $field['style'],
+				'rules'      => is_array( $field['active_callback'] ?? null ) ? array_values( $field['active_callback'] ) : [],
+			];
+		}
+
+		wp_add_inline_script(
+			'vlt-customizer-preview',
+			'window.vltFwCustomizerCss = ' . wp_json_encode( [ 'fields' => $fields, 'breakpoints' => self::get_breakpoints() ] ) . ';',
+			'before'
+		);
+	}
+
+	/**
+	 * Max widths of the devices below desktop, px
+	 *
+	 * @return array [ 'tablet' => int, 'mobile' => int ]
+	 */
+	public static function get_breakpoints() {
+		return wp_parse_args(
+			array_map( 'absint', (array) apply_filters( 'vlt_fw_customizer_breakpoints', [] ) ),
+			[
+				'tablet' => 991,
+				'mobile' => 767
+			]
 		);
 	}
 
@@ -269,13 +390,212 @@ class Customizer extends BaseModule {
 	 * Output accumulated dynamic CSS (theme hook)
 	 */
 	public function output_dynamic_css() {
-		$css = apply_filters( 'vlt_fw_customizer_dynamic_css', '' );
+		// The preview gets a style tag per field: customizer-preview.js rewrites it as the field changes
+		if ( is_customize_preview() ) {
+			foreach ( self::$styled as $id => $field ) {
+				echo '<style id="' . esc_attr( 'vlt-customizer-css-' . $id ) . '">' . wp_strip_all_tags( self::get_field_css( $field ) ) . '</style>' . "\n";
+			}
+
+			$css = '';
+		} else {
+			$css = implode( '', array_map( [ __CLASS__, 'get_field_css' ], self::$styled ) );
+		}
+
+		// CSS no field rule gives (a theme's own)
+		$css .= apply_filters( 'vlt_fw_customizer_dynamic_css', '' );
 
 		if ( empty( $css ) ) {
 			return;
 		}
 
 		echo '<style id="vlt-customizer-dynamic-css">' . wp_strip_all_tags( $css ) . '</style>' . "\n";
+	}
+
+	/**
+	 * CSS of a field's style rules: desktop, then tablet and mobile in their media queries
+	 *
+	 * @param array $field Queued field
+	 *
+	 * @return string '' while the field is hidden by its active_callback or has no value
+	 */
+	public static function get_field_css( $field ) {
+		if ( !self::rules_match( $field['active_callback'] ?? null, [ __CLASS__, 'get_option' ] ) ) {
+			return '';
+		}
+
+		$values      = !empty( $field['responsive'] ) ? self::get_responsive_option( $field['settings'] ) : [ 'desktop' => self::get_option( $field['settings'] ) ];
+		$breakpoints = self::get_breakpoints();
+		$wider       = '';
+		$css         = '';
+
+		foreach ( $values as $device => $value ) {
+			$value = self::css_value( $field, $value );
+
+			// Empty or as the wider device: follows it
+			if ( '' === $value || $value === $wider ) {
+				continue;
+			}
+
+			$wider = $value;
+			$block = '';
+
+			foreach ( $field['style'] as $rule ) {
+				$block .= $rule['element'] . '{' . $rule['property'] . ':' . str_replace( '$', $value, $rule['mask'] ) . ';}';
+			}
+
+			$css .= 'desktop' === $device ? $block : sprintf( '@media (max-width:%dpx){%s}', $breakpoints[ $device ], $block );
+		}
+
+		return $css;
+	}
+
+	/**
+	 * Value of a field as CSS
+	 *
+	 * @param array $field Queued field
+	 * @param mixed $value Saved value
+	 *
+	 * @return string
+	 */
+	private static function css_value( $field, $value ) {
+		if ( !is_scalar( $value ) ) {
+			return '';
+		}
+
+		$value = trim( (string) $value );
+
+		if ( '' === $value ) {
+			return '';
+		}
+
+		switch ( $field['type'] ?? 'text' ) {
+			case 'number':
+				return is_numeric( $value ) ? ( $value + 0 ) . self::number_units( $field )[0] : '';
+
+			case 'dimension':
+				return self::dimension_value( $field, $value );
+
+			case 'checkbox':
+				return rest_sanitize_boolean( $value ) ? '1' : '';
+
+			case 'typography':
+				$font = json_decode( $value, true );
+
+				return empty( $font['family'] ) ? '' : '"' . self::strip_css( $font['family'] ) . '"';
+
+			case 'image':
+			case 'upload':
+				$url = is_numeric( $value ) ? wp_get_attachment_image_url( (int) $value, 'full' ) : $value;
+
+				return $url ? 'url("' . esc_url_raw( $url ) . '")' : '';
+
+			default:
+				return self::strip_css( $value );
+		}
+	}
+
+	/**
+	 * A CSS value of a dimension field: number + one of its units (a bare number takes the first), a keyword of
+	 * it or, with functions, a CSS function of lengths; '' otherwise
+	 *
+	 * @param array  $field Queued field
+	 * @param string $value Raw
+	 *
+	 * @return string
+	 */
+	private static function dimension_value( $field, $value ) {
+		$value = strtolower( trim( (string) $value ) );
+		$units = self::dimension_units( $field );
+
+		if ( in_array( $value, self::dimension_keywords( $field ), true ) ) {
+			return $value;
+		}
+
+		if ( is_numeric( $value ) ) {
+			return ( $value + 0 ) . $units[0];
+		}
+
+		if ( preg_match( '/^(-?\d*\.?\d+)([a-z%]+)$/', $value, $match ) && in_array( $match[2], $units, true ) ) {
+			return $value;
+		}
+
+		$functions = self::dimension_functions( $field );
+
+		// Numbers, units, operators, commas and custom property names only
+		if ( $functions && preg_match( '/^(' . implode( '|', $functions ) . ')\([a-z0-9%.,+*\/\s()_-]+\)$/', $value ) ) {
+			return $value;
+		}
+
+		return '';
+	}
+
+	/**
+	 * Units of a dimension field
+	 */
+	private static function dimension_units( $field ) {
+		$units = array_values( array_filter( array_map( fn( $unit ) => preg_replace( '/[^a-z%]/', '', strtolower( (string) $unit ) ), (array) ( $field['units'] ?? self::UNITS ) ) ) );
+
+		return $units ?: self::UNITS;
+	}
+
+	/**
+	 * Functions of a dimension field: true for all, or a list
+	 */
+	private static function dimension_functions( $field ) {
+		$functions = $field['functions'] ?? false;
+
+		return is_array( $functions ) ? array_values( array_intersect( self::FUNCTIONS, $functions ) ) : ( $functions ? self::FUNCTIONS : [] );
+	}
+
+	/**
+	 * Keywords of a dimension field
+	 */
+	private static function dimension_keywords( $field ) {
+		return array_values( array_filter( array_map( 'sanitize_key', (array) ( $field['keywords'] ?? [] ) ) ) );
+	}
+
+	/**
+	 * Units of a number field: 'units', else 'unit' (none by default)
+	 */
+	private static function number_units( $field ) {
+		$units = array_map( fn( $unit ) => preg_replace( '/[^a-z%]/', '', strtolower( (string) $unit ) ), (array) ( $field['units'] ?? [ $field['unit'] ?? '' ] ) );
+
+		return $units ?: [ '' ];
+	}
+
+	/**
+	 * No way out of a declaration
+	 */
+	private static function strip_css( $value ) {
+		return trim( (string) preg_replace( '/[;{}<>\\\\]+/', '', (string) $value ) );
+	}
+
+	/**
+	 * Style rules of a field: [ [ element, property, mask ], … ]
+	 *
+	 * @param mixed $style Raw rules
+	 *
+	 * @return array
+	 */
+	private static function style_rules( $style ) {
+		$rules = [];
+
+		foreach ( (array) $style as $rule ) {
+			$property = (string) ( $rule['property'] ?? '' );
+			$element  = trim( (string) preg_replace( '/[{}<>;@\\\\]+/', '', (string) ( $rule['element'] ?? '' ) ) );
+
+			if ( '' === $element || !preg_match( '/^(?:--[A-Za-z0-9_-]+|[a-z][a-z-]*)$/', $property ) ) {
+				continue;
+			}
+
+			$rules[] = [
+				'element'  => $element,
+				'property' => $property,
+				'mask'     => self::strip_css( $rule['mask'] ?? '' ) ?: '$',
+			];
+		}
+
+		return $rules;
 	}
 
 	/**
@@ -308,6 +628,46 @@ class Customizer extends BaseModule {
 			return;
 		}
 
+		$args['responsive'] = !empty( $args['responsive'] ) && !in_array( $args['type'] ?? 'text', [ 'divider', 'notice', 'repeater' ], true );
+
+		if ( isset( $args['style'] ) ) {
+			$args['style'] = self::style_rules( $args['style'] );
+
+			if ( $args['style'] ) {
+				self::$styled[ $args['settings'] ] = $args;
+			}
+		}
+
+		if ( !$args['responsive'] ) {
+			self::queue_field( $args );
+
+			return;
+		}
+
+		// A field per device: tablet and mobile follow the wider device until they get a value
+		$default = $args['default'] ?? '';
+		$default = is_array( $default ) && array_intersect_key( $default, array_flip( self::DEVICES ) ) ? $default : [ 'desktop' => $default ];
+
+		foreach ( self::DEVICES as $device ) {
+			$field = array_merge( $args, [ 'default' => $default[ $device ] ?? '' ] );
+
+			if ( 'desktop' !== $device ) {
+				$field['settings'] = $args['settings'] . '_' . $device;
+			}
+
+			self::$devices[ $field['settings'] ] = [
+				'field'  => $args['settings'],
+				'device' => $device
+			];
+
+			self::queue_field( $field );
+		}
+	}
+
+	/**
+	 * Queue one field and store its default and choices
+	 */
+	private static function queue_field( $args ) {
 		self::$queue['fields'][] = $args;
 
 		if ( isset( $args['default'] ) ) {
@@ -317,6 +677,28 @@ class Customizer extends BaseModule {
 		if ( isset( $args['choices'] ) && is_array( $args['choices'] ) ) {
 			self::$registered_choices[ $args['settings'] ] = $args['choices'];
 		}
+	}
+
+	/**
+	 * Values of a responsive field per device; an empty device follows the wider one
+	 *
+	 * @param string $name Field settings
+	 *
+	 * @return array [ device => value ] (DEVICES)
+	 */
+	public static function get_responsive_option( $name ) {
+		$values = [];
+		$wider  = '';
+
+		foreach ( self::DEVICES as $device ) {
+			$value = self::get_option( 'desktop' === $device ? $name : $name . '_' . $device, '' );
+			$value = ( null === $value || '' === $value ) ? $wider : $value;
+
+			$values[ $device ] = $value;
+			$wider             = $value;
+		}
+
+		return $values;
 	}
 
 	/**
@@ -555,7 +937,7 @@ class Customizer extends BaseModule {
 				'default'           => $args['default'] ?? ( 'repeater' === ( $args['type'] ?? '' ) ? [] : '' ),
 				'type'              => $args['option_type'] ?? 'theme_mod',
 				'capability'        => $args['capability'] ?? 'edit_theme_options',
-				'transport'         => ( $args['transport'] ?? 'auto' ) === 'auto' ? 'refresh' : $args['transport'],
+				'transport'         => $this->get_transport( $args ),
 				'sanitize_callback' => $args['sanitize_callback'] ?? $this->guess_sanitize_callback( $args ),
 			]
 		);
@@ -614,6 +996,32 @@ class Customizer extends BaseModule {
 			case 'typography':
 				return new TypographyControl( $wp_customize, $id, $control_args );
 
+			case 'dimension':
+				return new ValueControl(
+					$wp_customize,
+					$id,
+					$control_args + [
+						'units'     => self::dimension_units( $args ),
+						'functions' => self::dimension_functions( $args ),
+						'keywords'  => self::dimension_keywords( $args ),
+					]
+				);
+
+			case 'number':
+				$attrs = $args['input_attrs'] ?? [];
+
+				return new ValueControl(
+					$wp_customize,
+					$id,
+					$control_args + [
+						'units'   => self::number_units( $args ),
+						'numeric' => true,
+						'min'     => isset( $args['min'] ) ? (float) $args['min'] : ( isset( $attrs['min'] ) ? (float) $attrs['min'] : null ),
+						'max'     => isset( $args['max'] ) ? (float) $args['max'] : ( isset( $attrs['max'] ) ? (float) $attrs['max'] : null ),
+						'step'    => (float) ( $args['step'] ?? $attrs['step'] ?? 1 ) ?: 1,
+					]
+				);
+
 			case 'repeater':
 				$control_args['fields']       = $args['fields'] ?? [];
 				$control_args['row_label']    = $args['row_label'] ?? [];
@@ -629,7 +1037,6 @@ class Customizer extends BaseModule {
 			case 'text':
 			case 'url':
 			case 'email':
-			case 'number':
 				$control_args['type'] = $type;
 
 				return new \WP_Customize_Control( $wp_customize, $id, $control_args );
@@ -672,6 +1079,11 @@ class Customizer extends BaseModule {
 			case 'number':
 				return [ $this, 'sanitize_number' ];
 
+			case 'dimension':
+				return function ( $value ) use ( $args ) {
+					return '' === trim( (string) $value ) ? '' : self::dimension_value( $args, $value );
+				};
+
 			case 'typography':
 				return [ $this, 'sanitize_typography' ];
 
@@ -691,6 +1103,11 @@ class Customizer extends BaseModule {
 	 * Sanitize a number field value (supports decimals and negative numbers)
 	 */
 	public function sanitize_number( $value ) {
+		// Empty: the default, or for tablet and mobile the wider device
+		if ( '' === $value || null === $value ) {
+			return '';
+		}
+
 		return is_numeric( $value ) ? $value + 0 : 0;
 	}
 
@@ -792,13 +1209,45 @@ class Customizer extends BaseModule {
 	 * Evaluate active_callback
 	 */
 	private function evaluate_active_callback( $rules, \WP_Customize_Manager $wp_customize ) {
+		return self::rules_match(
+			$rules,
+			function ( $id ) use ( $wp_customize ) {
+				$setting = $wp_customize->get_setting( $id );
+
+				return $setting ? $setting->value() : null;
+			}
+		);
+	}
+
+	/**
+	 * Transport of a field: 'auto' (the default) is postMessage for a field with style rules
+	 * (customizer-preview.js rewrites its CSS), refresh otherwise and for a font, which loads with the page
+	 */
+	private function get_transport( $args ) {
+		$transport = $args['transport'] ?? 'auto';
+
+		if ( 'auto' !== $transport ) {
+			return $transport;
+		}
+
+		return !empty( $args['style'] ) && 'typography' !== ( $args['type'] ?? '' ) ? 'postMessage' : 'refresh';
+	}
+
+	/**
+	 * Whether all active_callback rules match
+	 *
+	 * @param mixed    $rules [ [ setting, operator, value ], … ]
+	 * @param callable $get   Value of a setting by its id
+	 *
+	 * @return bool
+	 */
+	private static function rules_match( $rules, callable $get ) {
 		if ( !is_array( $rules ) ) {
 			return true;
 		}
 
 		foreach ( $rules as $rule ) {
-			$setting = $wp_customize->get_setting( $rule['setting'] ?? '' );
-			$value   = $setting ? $setting->value() : null;
+			$value    = $get( $rule['setting'] ?? '' );
 			$operator = $rule['operator'] ?? '==';
 			$compare  = $rule['value'] ?? null;
 

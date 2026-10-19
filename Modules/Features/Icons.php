@@ -34,7 +34,7 @@ class Icons extends BaseModule {
 	 * Register module
 	 */
 	public function register() {
-		add_action( 'vlt_fw_body_open', [ __CLASS__, 'render_sprite' ] );
+		add_action( 'wp_body_open', [ __CLASS__, 'render_sprite' ] );
 	}
 
 	/**

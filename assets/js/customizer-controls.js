@@ -1,5 +1,6 @@
 /* ========================================
- * Typography Control (Vanilla JS)
+ * Customizer controls (Vanilla JS): changed dot, device switch, value field, typography, alpha color, repeater,
+ * panel and section icons
  * ======================================== */
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
@@ -11,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	var fonts = window.vltFwCustomizerFonts || {};
 	var icons = window.vltFwCustomizerIcons || {};
 	var defaultValues = window.vltFwCustomizerDefaults || {};
+	var devices = window.vltFwCustomizerDevices || {};
 
 	wp.customize.bind('ready', function () {
 		wp.customize.control.each(function (control) {
@@ -26,56 +28,612 @@ document.addEventListener('DOMContentLoaded', function () {
 		applyPanelIcons();
 		initAlphaColorPickers();
 		initRepeaterControls();
-		initResetButtons();
+		initFieldControls();
 	});
 
 	/* ========================================
-	 * Reset-to-default button
+	 * Field controls: the changed dot (click: reset), the device switch of responsive fields, the value field
 	 * ======================================== */
-	function initResetButtons() {
-		wp.customize.control.each(function (control) {
-			control.deferred.embedded.done(function () {
-				addResetButton(control);
-			});
-		});
+	function initFieldControls() {
+		var api = wp.customize;
+		var setDevice = function (device) {
+			document.body.setAttribute('data-vlt-device', device);
+		};
 
-		wp.customize.control.bind('add', function (control) {
+		// Responsive fields show the device being previewed
+		setDevice(api.previewedDevice.get() || 'desktop');
+		api.previewedDevice.bind(setDevice);
+
+		var init = function (control) {
 			control.deferred.embedded.done(function () {
-				addResetButton(control);
+				if ('vlt-value' === control.params.type) {
+					initValueControl(control);
+				}
+
+				addDeviceSwitch(control);
+				addChangedDot(control);
 			});
-		});
+		};
+
+		api.control.each(init);
+		api.control.bind('add', init);
 	}
 
-	function addResetButton(control) {
-		if (!control.setting || control.container.find('.vlt-reset-control').length) {
-			return;
-		}
+	// Same value: '18' is 18, an unset value is ''
+	function sameValue(a, b) {
+		var normalize = function (value) {
+			if (null === value || undefined === value || false === value) {
+				return '';
+			}
 
-		if (!Object.prototype.hasOwnProperty.call(defaultValues, control.id)) {
-			return;
-		}
+			if (true === value) {
+				return '1';
+			}
 
+			return 'object' === typeof value ? JSON.stringify(value) : String(value);
+		};
+
+		return normalize(a) === normalize(b);
+	}
+
+	// The label of a control: its title, or the label of a checkbox
+	function controlTitle(control) {
 		var title = control.container.find('.customize-control-title').first();
 
 		if (!title.length) {
+			title = control.container.find('.customize-inside-control-row > label').first();
+		}
+
+		return title.length ? title.get(0) : null;
+	}
+
+	// The dot: the value is not the default; the reset button next to it sets the default back
+	function addChangedDot(control) {
+		if (!control.setting || !Object.prototype.hasOwnProperty.call(defaultValues, control.id) || control.container.find('.vlt-changed-dot').length) {
+			return;
+		}
+
+		var title = controlTitle(control);
+
+		if (!title) {
 			return;
 		}
 
 		var defaultValue = defaultValues[control.id];
 
-		var button = document.createElement('button');
-		button.type = 'button';
-		button.className = 'vlt-reset-control dashicons dashicons-image-rotate';
-		button.setAttribute('aria-label', 'Reset to default');
-		button.title = 'Reset to default';
+		var dot = document.createElement('span');
+		dot.className = 'vlt-changed-dot';
+		dot.title = 'Changed from the default';
 
-		button.addEventListener('click', function (e) {
-			e.preventDefault();
+		var reset = document.createElement('button');
+		reset.type = 'button';
+		reset.className = 'vlt-reset-control dashicons dashicons-image-rotate';
+		reset.title = 'Reset to default';
+		reset.setAttribute('aria-label', 'Reset to default');
+
+		reset.addEventListener('click', function (event) {
+			// Inside a checkbox label: the checkbox stays as it is
+			event.preventDefault();
+			event.stopPropagation();
 			control.setting.set(defaultValue);
 		});
 
-		title.get(0).appendChild(button);
-		title.get(0).classList.add('vlt-has-reset-control');
+		var update = function () {
+			var same = sameValue(control.setting.get(), defaultValue);
+
+			dot.hidden = same;
+			reset.hidden = same;
+		};
+
+		title.classList.add('vlt-control-title');
+		title.appendChild(dot);
+		title.appendChild(reset);
+		control.setting.bind(update);
+		update();
+	}
+
+	var DEVICE_ICONS = {
+		desktop: '<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M9 20h6M12 16v4"/>',
+		tablet: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M11 18h2"/>',
+		mobile: '<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>'
+	};
+
+	var DEVICE_LABELS = { desktop: 'Desktop', tablet: 'Tablet', mobile: 'Mobile' };
+
+	function addDeviceSwitch(control) {
+		var info = devices[control.id];
+
+		if (!info) {
+			return;
+		}
+
+		control.container.addClass('vlt-device-control vlt-device-control--' + info.device);
+
+		var title = controlTitle(control);
+
+		if (!title || title.querySelector('.vlt-devices')) {
+			return;
+		}
+
+		var group = document.createElement('span');
+		group.className = 'vlt-devices';
+
+		Object.keys(DEVICE_ICONS).forEach(function (device) {
+			var button = document.createElement('button');
+
+			button.type = 'button';
+			button.className = 'vlt-devices__item' + (device === info.device ? ' is-active' : '');
+			button.title = DEVICE_LABELS[device];
+			button.setAttribute('aria-label', DEVICE_LABELS[device]);
+			button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + DEVICE_ICONS[device] + '</svg>';
+
+			button.addEventListener('click', function (event) {
+				event.preventDefault();
+				wp.customize.previewedDevice.set(device);
+			});
+
+			group.appendChild(button);
+		});
+
+		title.classList.add('vlt-control-title');
+		title.appendChild(group);
+	}
+
+	// Settings of the wider devices of a responsive field, nearest first
+	function widerSettings(id) {
+		var info = devices[id];
+
+		if (!info) {
+			return [];
+		}
+
+		var order = ['desktop', 'tablet', 'mobile'];
+
+		return order.slice(0, order.indexOf(info.device)).reverse().map(function (device) {
+			return 'desktop' === device ? info.field : info.field + '_' + device;
+		});
+	}
+
+	/* ========================================
+	 * Value field (Modules/Core/Controls/ValueControl.php): a number with a unit, or a CSS function or keyword
+	 * picked from the unit menu; under it a ruler, dragged sideways or stepped with its arrows (Shift: by 10)
+	 * ======================================== */
+	var LENGTH_UNITS = ['px', '%', 'em', 'rem', 'vw', 'vh'];
+	var FUNCTIONS = ['clamp', 'min', 'max', 'calc', 'var'];
+	var FUNCTION_EXAMPLES = {
+		clamp: '200px, 50vh, 600px',
+		min: '100px, 50%',
+		max: '300px, 50vw',
+		calc: '100% - 20px',
+		var: '--name'
+	};
+
+	// Times a numeric field can switch between, in ms
+	var TIME = { ms: 1, s: 1000 };
+
+	// How far the ruler turns for one step, px
+	var TURN = 2;
+
+	// No float noise (0.30000000000000004) in the field
+	function tidy(number) {
+		return String(parseFloat(number.toFixed(4)));
+	}
+
+	function clampNumber(number, min, max) {
+		return Math.min(null === max || undefined === max ? Infinity : max, Math.max(null === min || undefined === min ? -Infinity : min, number));
+	}
+
+	function initValueControl(control) {
+		var root = control.container.find('.vlt-value').get(0);
+
+		if (!root || root.dataset.ready) {
+			return;
+		}
+
+		root.dataset.ready = '1';
+
+		var params = control.params;
+		var units = params.units && params.units.length ? params.units : LENGTH_UNITS;
+		var keywords = params.keywords || [];
+		var offered = params.functions || [];
+		var numeric = !!params.numeric;
+		var min = params.min;
+		var max = params.max;
+		var step = parseFloat(params.step) || 1;
+		var wider = widerSettings(control.id);
+
+		var mode = units[0];
+		var text = '';
+		var sent;
+		var spin = 0;
+		var drag = null;
+
+		// How many units[0] one unit shown is (1 but for a time shown in s): min, max and step are in units[0]
+		var ratio = function (unit) {
+			return TIME[unit] && TIME[units[0]] ? TIME[unit] / TIME[units[0]] : 1;
+		};
+
+		var parse = function (value) {
+			var raw = String(null === value || undefined === value ? '' : value).trim();
+			var match = raw.match(/^(-?\d*\.?\d+)([a-z%]*)$/i);
+
+			if (match && (!match[2] || units.indexOf(match[2].toLowerCase()) !== -1)) {
+				return { mode: match[2].toLowerCase() || units[0], text: match[1] };
+			}
+
+			match = raw.match(/^(clamp|min|max|calc|var)\((.*)\)$/i);
+
+			if (match) {
+				return { mode: match[1].toLowerCase(), text: match[2].trim() };
+			}
+
+			if (keywords.indexOf(raw) !== -1) {
+				return { mode: raw, text: '' };
+			}
+
+			return { mode: units[0], text: raw };
+		};
+
+		var format = function (nextMode, nextText) {
+			var value = String(nextText).trim();
+
+			if (keywords.indexOf(nextMode) !== -1) {
+				return nextMode;
+			}
+
+			if ('' === value) {
+				return '';
+			}
+
+			if ('var' === nextMode) {
+				var parts = value.split(',').map(function (part) {
+					return part.trim();
+				});
+				var name = parts.shift();
+				var variable = 0 === name.indexOf('--') ? name : '--' + name;
+
+				return parts.length ? 'var(' + variable + ', ' + parts.join(', ') + ')' : 'var(' + variable + ')';
+			}
+
+			return FUNCTIONS.indexOf(nextMode) !== -1 ? nextMode + '(' + value + ')' : value + nextMode;
+		};
+
+		// The value of the nearest wider device with one: shown as the placeholder
+		var inherited = function () {
+			for (var i = 0; i < wider.length; i++) {
+				var value = wp.customize(wider[i]) ? wp.customize(wider[i]).get() : '';
+
+				if (null !== value && undefined !== value && '' !== value) {
+					return value;
+				}
+			}
+
+			return '';
+		};
+
+		// The value in units[0]: the number typed, else the placeholder's
+		var stored = function () {
+			var number = parseFloat(text);
+
+			if (isNaN(number)) {
+				var fallback = parseFloat(numeric ? inherited() : parse(inherited()).text);
+
+				return isNaN(fallback) ? 0 : fallback * (numeric ? 1 : ratio(mode));
+			}
+
+			return number * ratio(mode);
+		};
+
+		// Markup
+		var box = document.createElement('div');
+		box.className = 'vlt-value__box';
+
+		var input = document.createElement('input');
+		input.type = 'text';
+		input.className = 'vlt-value__input';
+		input.id = '_customize-input-' + control.id;
+		input.autocomplete = 'off';
+		box.appendChild(input);
+
+		var calls = offered.filter(function (name) {
+			return 'var' !== name;
+		});
+
+		var groups = [
+			units.length > 1 && { label: 'Units', options: units },
+			calls.length && { label: 'Functions', options: calls },
+			offered.indexOf('var') !== -1 && { label: 'Variable', options: ['var'] },
+			keywords.length && { label: 'Keywords', options: keywords }
+		].filter(Boolean);
+
+		var unit = document.createElement(groups.length ? 'button' : 'span');
+		unit.className = 'vlt-value__unit' + (groups.length ? '' : ' is-static');
+		box.appendChild(unit);
+
+		var menu = null;
+
+		if (groups.length) {
+			unit.type = 'button';
+			unit.setAttribute('aria-haspopup', 'listbox');
+			unit.setAttribute('aria-expanded', 'false');
+			unit.setAttribute('aria-label', 'Unit');
+
+			menu = document.createElement('div');
+			menu.className = 'vlt-value__menu';
+			menu.setAttribute('role', 'listbox');
+			menu.hidden = true;
+
+			groups.forEach(function (group) {
+				var section = document.createElement('div');
+				section.className = 'vlt-value__menu-group';
+				section.innerHTML = '<div class="vlt-value__menu-label">' + group.label + '</div>';
+
+				group.options.forEach(function (option) {
+					var item = document.createElement('button');
+					item.type = 'button';
+					item.className = 'vlt-value__menu-item';
+					item.setAttribute('role', 'option');
+					item.dataset.mode = option;
+					item.textContent = option;
+
+					item.addEventListener('click', function () {
+						select(option);
+						toggleMenu(false);
+					});
+
+					section.appendChild(item);
+				});
+
+				menu.appendChild(section);
+			});
+
+			unit.addEventListener('click', function () {
+				toggleMenu(menu.hidden);
+			});
+
+			document.addEventListener('mousedown', function (event) {
+				if (!menu.hidden && !root.contains(event.target) && !menu.contains(event.target)) {
+					toggleMenu(false);
+				}
+			});
+
+			// The menu sits on the unit button: a scrolled pane or a resized window closes it
+			document.addEventListener('scroll', function () {
+				if (!menu.hidden) {
+					toggleMenu(false);
+				}
+			}, true);
+
+			window.addEventListener('resize', function () {
+				if (!menu.hidden) {
+					toggleMenu(false);
+				}
+			});
+		}
+
+		var ruler = document.createElement('div');
+		ruler.className = 'vlt-value__ruler';
+		ruler.innerHTML = '<button type="button" class="vlt-value__step" tabindex="-1" aria-hidden="true">◀</button>'
+			+ '<span class="vlt-value__track" title="Drag to change (Shift: faster)"></span>'
+			+ '<button type="button" class="vlt-value__step" tabindex="-1" aria-hidden="true">▶</button>';
+
+		var track = ruler.querySelector('.vlt-value__track');
+		var steps = ruler.querySelectorAll('.vlt-value__step');
+
+		root.appendChild(box);
+
+		// In the body: the panes of the Customizer cut off what overflows them
+		if (menu) {
+			document.body.appendChild(menu);
+		}
+
+		root.appendChild(ruler);
+
+		// State to the markup
+		var isLength = function () {
+			return units.indexOf(mode) !== -1;
+		};
+
+		var placeholder = function () {
+			var value = inherited();
+
+			if (keywords.indexOf(mode) !== -1) {
+				return mode;
+			}
+
+			if ('' === value) {
+				return FUNCTION_EXAMPLES[mode] || '';
+			}
+
+			if (numeric) {
+				return isNaN(parseFloat(value)) ? '' : tidy(parseFloat(value) / ratio(mode));
+			}
+
+			var parsed = parse(value);
+
+			return parsed.mode === mode ? parsed.text : String(value);
+		};
+
+		var paint = function () {
+			var keyword = keywords.indexOf(mode) !== -1;
+
+			input.value = text;
+			input.placeholder = placeholder();
+			input.disabled = keyword;
+			input.inputMode = isLength() ? 'decimal' : 'text';
+			box.classList.toggle('is-disabled', keyword);
+			unit.textContent = mode;
+			unit.hidden = !groups.length && !mode;
+			ruler.hidden = !isLength();
+
+			if (menu) {
+				menu.querySelectorAll('.vlt-value__menu-item').forEach(function (item) {
+					item.classList.toggle('is-active', item.dataset.mode === mode);
+					item.setAttribute('aria-selected', item.dataset.mode === mode ? 'true' : 'false');
+				});
+			}
+		};
+
+		var show = function (value) {
+			var parsed = parse(value);
+
+			// A number keeps the unit it is shown in
+			if (numeric) {
+				text = '' === parsed.text || isNaN(parseFloat(parsed.text)) ? '' : tidy(parseFloat(parsed.text) / ratio(mode));
+			} else {
+				mode = parsed.mode;
+				text = parsed.text;
+			}
+
+			paint();
+		};
+
+		var commit = function (nextMode, nextText) {
+			mode = nextMode;
+			text = String(nextText);
+
+			var number = parseFloat(text);
+			var next = numeric
+				? ('' === text.trim() ? '' : clampNumber(isNaN(number) ? 0 : Math.round(number * ratio(mode) * 1e4) / 1e4, min, max))
+				: format(mode, text);
+
+			sent = JSON.stringify(next);
+			control.setting.set(next);
+			paint();
+		};
+
+		var turn = function (count) {
+			spin += count * TURN;
+			track.style.backgroundPositionX = Math.round(spin) + 'px';
+		};
+
+		var stepBy = function (delta) {
+			turn(delta / step);
+			commit(mode, tidy(clampNumber(Math.round((stored() + delta) * 100) / 100, min, max) / ratio(mode)));
+		};
+
+		var select = function (next) {
+			// A number keeps its value across units; a function starts from its example, a variable empty
+			if (numeric) {
+				var value = stored();
+
+				mode = next;
+				commit(next, '' === text.trim() ? '' : tidy(value / ratio(next)));
+			} else if (FUNCTIONS.indexOf(next) !== -1) {
+				commit(next, 'var' === next ? '' : (FUNCTIONS.indexOf(mode) !== -1 ? text : FUNCTION_EXAMPLES[next]));
+			} else if (TIME[mode] && TIME[next] && '' !== text.trim() && !isNaN(parseFloat(text))) {
+				var time = stored();
+
+				commit(next, tidy(time / ratio(next)));
+			} else {
+				commit(next, units.indexOf(next) !== -1 && units.indexOf(mode) === -1 ? '' : text);
+			}
+		};
+
+		var toggleMenu = function (open) {
+			menu.hidden = !open;
+			unit.setAttribute('aria-expanded', open ? 'true' : 'false');
+
+			if (!open) {
+				return;
+			}
+
+			// Under the unit button, its right edge; above it when there is no room below
+			var rect = unit.getBoundingClientRect();
+			var below = window.innerHeight - rect.bottom - 8;
+			var height = menu.offsetHeight;
+
+			menu.style.left = Math.max(8, rect.right - menu.offsetWidth) + 'px';
+			menu.style.top = (height > below && rect.top - 8 > below ? rect.top - 4 - height : rect.bottom + 4) + 'px';
+		};
+
+		// Events
+		input.addEventListener('input', function () {
+			var from = parseFloat(text);
+			var to = parseFloat(input.value);
+
+			if (isLength() && !isNaN(from) && !isNaN(to)) {
+				turn(((to - from) * ratio(mode)) / step);
+			}
+
+			commit(mode, input.value);
+		});
+
+		input.addEventListener('keydown', function (event) {
+			if (isLength() && ('ArrowUp' === event.key || 'ArrowDown' === event.key)) {
+				event.preventDefault();
+				stepBy(('ArrowUp' === event.key ? 1 : -1) * step * (event.shiftKey ? 10 : 1));
+			}
+		});
+
+		steps[0].addEventListener('click', function (event) {
+			stepBy(-step * (event.shiftKey ? 10 : 1));
+		});
+
+		steps[1].addEventListener('click', function (event) {
+			stepBy(step * (event.shiftKey ? 10 : 1));
+		});
+
+		track.addEventListener('pointerdown', function (event) {
+			if (!isLength()) {
+				return;
+			}
+
+			track.setPointerCapture(event.pointerId);
+			drag = { x: event.clientX, value: stored(), text: null, frame: 0 };
+			root.classList.add('is-dragging');
+		});
+
+		track.addEventListener('pointermove', function (event) {
+			if (!drag) {
+				return;
+			}
+
+			var count = (event.clientX - drag.x) * (event.shiftKey ? 10 : 1);
+			var state = drag;
+
+			turn(count);
+			state.x = event.clientX;
+			state.value = clampNumber(state.value + count * step, min, max);
+			state.text = tidy((Math.round(state.value / step) * step) / ratio(mode));
+
+			// The setting (and the preview) once a frame
+			if (!state.frame) {
+				state.frame = requestAnimationFrame(function () {
+					state.frame = 0;
+					commit(mode, state.text);
+				});
+			}
+		});
+
+		var release = function () {
+			if (drag && drag.frame) {
+				cancelAnimationFrame(drag.frame);
+				commit(mode, drag.text);
+			}
+
+			drag = null;
+			root.classList.remove('is-dragging');
+		};
+
+		track.addEventListener('pointerup', release);
+		track.addEventListener('pointercancel', release);
+
+		// A new value from outside (a reset, the setting loaded): shown; what this field sent stays as typed
+		control.setting.bind(function (value) {
+			if (JSON.stringify(value) !== sent) {
+				show(value);
+			}
+		});
+
+		// The wider devices change the placeholder
+		wider.forEach(function (id) {
+			wp.customize(id, function (setting) {
+				setting.bind(paint);
+			});
+		});
+
+		show(control.setting.get());
 	}
 
 	/* ========================================
