@@ -33,6 +33,7 @@ class Assets extends BaseModule {
 		}
 
 		add_action( 'wp_enqueue_scripts', [ $this, 'frontend_hooks' ], 5 );
+		add_action( 'enqueue_block_assets', [ $this, 'enqueue_editor_fonts' ] );
 	}
 
 	/**
@@ -122,6 +123,22 @@ class Assets extends BaseModule {
 				'<link rel="preload" href="%s" as="style" onload="this.onload=null;this.rel=\'stylesheet\'">' . "\n",
 				esc_url( $fonts_url )
 			);
+		}
+	}
+
+	/**
+	 * Block editor: the same Google Fonts as the site (vlt_fw_google_fonts, the Customizer's fonts too), so the
+	 * --primary-font / --secondary-font of the editor show their fonts; enqueue_block_assets reaches the editor iframe
+	 */
+	public function enqueue_editor_fonts() {
+		if ( !is_admin() ) {
+			return;
+		}
+
+		$fonts_url = $this->get_google_fonts_url();
+
+		if ( $fonts_url ) {
+			wp_enqueue_style( 'vlt-fw-google-fonts', $fonts_url, [], null );
 		}
 	}
 

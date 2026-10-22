@@ -1,5 +1,5 @@
 /* ========================================
- * Customizer controls: the changed dot, the device switch, the value field (assets/js/customizer-controls.js)
+ * Customizer controls: the changed dot, the reset button, the value field (assets/js/customizer-controls.js)
  * ======================================== */
 #customize-controls,
 .vlt-value__menu {
@@ -15,7 +15,7 @@
 }
 
 /* ========================================
- * Label row: label, device switch, dot
+ * Label row: label, dot, reset
  * ======================================== */
 .vlt-control-title {
 	display: flex !important;
@@ -75,57 +75,6 @@
 
 .vlt-reset-control:hover {
 	color: var(--vlt-accent);
-}
-
-/* ========================================
- * Device switch of responsive fields
- * ======================================== */
-.vlt-devices {
-	display: inline-flex;
-	flex: none;
-	gap: 2px;
-	align-items: center;
-}
-
-.vlt-devices__item {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 20px;
-	height: 20px;
-	padding: 0;
-	color: var(--vlt-muted);
-	cursor: pointer;
-	background: none;
-	border: 0;
-	border-radius: 3px;
-	transition: color .15s, background-color .15s;
-}
-
-.vlt-devices__item svg {
-	width: 14px;
-	height: 14px;
-	fill: none;
-	stroke: currentColor;
-	stroke-width: 1.8;
-	stroke-linecap: round;
-	stroke-linejoin: round;
-}
-
-.vlt-devices__item:hover {
-	color: var(--vlt-text);
-}
-
-.vlt-devices__item.is-active {
-	color: var(--vlt-accent);
-	background: color-mix(in oklab, var(--vlt-accent) 10%, transparent);
-}
-
-/* The field of the device being previewed only */
-body[data-vlt-device="desktop"] .vlt-device-control:not(.vlt-device-control--desktop),
-body[data-vlt-device="tablet"] .vlt-device-control:not(.vlt-device-control--tablet),
-body[data-vlt-device="mobile"] .vlt-device-control:not(.vlt-device-control--mobile) {
-	display: none !important;
 }
 
 /* ========================================
@@ -329,4 +278,170 @@ body[data-vlt-device="mobile"] .vlt-device-control:not(.vlt-device-control--mobi
 
 .vlt-value__track:active {
 	cursor: grabbing;
+}
+
+/* ========================================
+ * Typography: a panel of the family and weight, the toggles, the lengths two to a row
+ * ======================================== */
+.vlt-typography-control__panel {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 12px;
+	background: var(--vlt-surface);
+	border: 1px solid var(--vlt-divider);
+	border-radius: 6px;
+}
+
+.vlt-typography-control__icon {
+	width: 16px;
+	height: 16px;
+	font-size: 16px;
+	color: var(--vlt-muted);
+	vertical-align: -3px;
+}
+
+.vlt-typography-control__row {
+	display: flex;
+	gap: 8px;
+}
+
+.vlt-typography-control__field {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+}
+
+.vlt-typography-control__weight {
+	flex: 0 0 38%;
+}
+
+.vlt-typography-control__label {
+	overflow: hidden;
+	font-size: 10px;
+	font-weight: 500;
+	line-height: 1.2;
+	color: var(--vlt-muted);
+	text-overflow: ellipsis;
+	text-transform: uppercase;
+	letter-spacing: .05em;
+	white-space: nowrap;
+}
+
+/* Selects as tall as the value fields; the admin's select rules lose to these */
+#customize-controls .vlt-typography-control__panel select:not([multiple]) {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: none;
+	height: 36px;
+	min-height: 36px;
+	padding: 0 24px 0 10px;
+	margin: 0;
+	font-size: 13px;
+	line-height: 34px;
+	color: var(--vlt-text);
+	text-overflow: ellipsis;
+	border: 1px solid var(--vlt-border);
+	border-radius: var(--vlt-radius);
+	transition: border-color .15s, box-shadow .15s;
+}
+
+#customize-controls .vlt-typography-control__panel select:hover {
+	border-color: var(--vlt-border-strong);
+}
+
+#customize-controls .vlt-typography-control__panel select:focus {
+	border-color: var(--vlt-accent);
+	outline: none;
+	box-shadow: 0 0 0 .5px var(--vlt-accent);
+}
+
+/* Toggles: one bar, the pressed ones in the accent */
+.vlt-typography-control__toggles {
+	display: flex;
+	overflow: hidden;
+	border: 1px solid var(--vlt-border);
+	border-radius: var(--vlt-radius);
+}
+
+.vlt-typography-control__toggle {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+	height: 32px;
+	padding: 0;
+	font-family: inherit;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--vlt-muted);
+	cursor: pointer;
+	background: var(--vlt-surface);
+	border: 0;
+	transition: color .15s, background-color .15s;
+}
+
+.vlt-typography-control__toggle + .vlt-typography-control__toggle {
+	border-left: 1px solid var(--vlt-divider);
+}
+
+.vlt-typography-control__toggle .dashicons {
+	width: 18px;
+	height: 18px;
+	font-size: 18px;
+}
+
+.vlt-typography-control__toggle:hover {
+	color: var(--vlt-text);
+	background: var(--vlt-muted-bg);
+}
+
+.vlt-typography-control__toggle:focus-visible {
+	position: relative;
+	z-index: 1;
+	outline: none;
+	box-shadow: inset 0 0 0 1.5px var(--vlt-accent);
+}
+
+.vlt-typography-control__toggle.is-active {
+	color: #ffffff;
+	background: var(--vlt-accent);
+}
+
+/* Lengths: value fields, two to a row, a little lower than on their own */
+.vlt-typography-control__lengths {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 10px 8px;
+}
+
+.vlt-typography-control__lengths .vlt-value__box {
+	height: 36px;
+}
+
+#customize-controls .vlt-typography-control__lengths input.vlt-value__input {
+	padding: 0 8px;
+	font-size: 13px;
+}
+
+.vlt-typography-control__lengths .vlt-value__unit {
+	padding: 0 8px;
+}
+
+.vlt-typography-control__lengths .vlt-value__ruler {
+	height: 10px;
+	margin-top: 2px;
+}
+
+.vlt-typography-control__variants {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.vlt-typography-control__variants-note {
+	font-size: 11px;
+	color: var(--vlt-muted);
 }

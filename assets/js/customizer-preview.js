@@ -1,24 +1,16 @@
 /* ========================================
- * Customizer preview: the CSS of the fields with style rules (Customizer::get_field_css() in JS), rewritten in
- * their <style id="vlt-customizer-css-{settings}"> as the field, its devices or the settings of its
- * active_callback change
+ * Customizer preview: the CSS of the fields' output rules (Customizer::get_field_css() in JS), rewritten in their
+ * <style id="vlt-customizer-css-{settings}"> as the field or the settings of its active_callback change
  * ======================================== */
 (function (api) {
 	'use strict';
 
-	var data = window.vltFwCustomizerCss || { fields: {}, breakpoints: {} };
-	var DEVICES = ['desktop', 'tablet', 'mobile'];
+	var data = window.vltFwCustomizerCss || { fields: {} };
 
 	function settingValue(id) {
 		var setting = api(id);
 
 		return setting ? setting.get() : null;
-	}
-
-	function settingIds(id, field) {
-		return field.responsive ? DEVICES.map(function (device) {
-			return 'desktop' === device ? id : id + '_' + device;
-		}) : [id];
 	}
 
 	function stripCss(value) {
@@ -46,7 +38,28 @@
 		return /^(clamp|min|max|calc|var)\([a-z0-9%.,+*\/\s()_-]+\)$/.test(value) ? value : '';
 	}
 
-	function cssValue(field, value) {
+	function cssValue(field, value, choice) {
+		// A key of the value: font-family of a typography field ({"family":…}), or of any object value
+		if (choice) {
+			var data = value;
+
+			if ('string' === typeof value) {
+				try {
+					data = JSON.parse(value);
+				} catch (error) {
+					data = null;
+				}
+			}
+
+			var part = data && 'object' === typeof data ? (undefined !== data[choice] ? data[choice] : ('font-family' === choice ? data.family : '')) : '';
+
+			if (null === part || undefined === part || 'object' === typeof part || '' === String(part).trim()) {
+				return '';
+			}
+
+			return 'font-family' === choice ? '"' + stripCss(part) + '"' : stripCss(part);
+		}
+
 		if (null === value || undefined === value || 'object' === typeof value) {
 			return '';
 		}
@@ -85,6 +98,78 @@
 		}
 	}
 
+	var TYPOGRAPHY = ['font-size', 'line-height', 'letter-spacing', 'word-spacing', 'font-weight', 'font-style', 'text-transform', 'text-decoration'];
+
+	// Declarations of a typography value (Customizer::typography_css(); the saved value is sanitized)
+	function typographyCss(value) {
+		var data = value;
+
+		if ('string' === typeof value) {
+			try {
+				data = JSON.parse(value);
+			} catch (error) {
+				data = null;
+			}
+		}
+
+		if (!data || 'object' !== typeof data) {
+			return '';
+		}
+
+		var css = data.family ? 'font-family:"' + stripCss(data.family) + '";' : '';
+
+		TYPOGRAPHY.forEach(function (property) {
+			var part = data[property];
+
+			if (null !== part && undefined !== part && 'object' !== typeof part && '' !== String(part).trim()) {
+				css += property + ':' + stripCss(part) + ';';
+			}
+		});
+
+		return css;
+	}
+
+	// A Google font picked in the preview: its weights (the variants, else the weight set) from fonts.googleapis.com,
+	// as Customizer::collect_typography_google_fonts() queues it; a font of another source fails quietly, it loads with the page
+	function loadFont(value) {
+		var data = value;
+
+		if ('string' === typeof value) {
+			try {
+				data = JSON.parse(value);
+			} catch (error) {
+				data = null;
+			}
+		}
+
+		if (!data || !data.family) {
+			return;
+		}
+
+		var variants = Array.isArray(data.variants) && data.variants.length ? data.variants : [data['font-weight'] || 'regular'];
+		var weights = variants.map(function (variant) {
+			variant = String(variant);
+
+			return 'bold' === variant ? 700 : parseInt(variant.replace(/[^0-9]/g, ''), 10) || 400;
+		}).filter(function (weight, index, list) {
+			return list.indexOf(weight) === index;
+		}).sort(function (a, b) {
+			return a - b;
+		});
+
+		var href = 'https://fonts.googleapis.com/css2?family=' + encodeURIComponent(data.family).replace(/%20/g, '+') + ':wght@' + weights.join(';') + '&display=swap';
+
+		if (document.querySelector('link[data-vlt-preview-font="' + href.replace(/"/g, '') + '"]')) {
+			return;
+		}
+
+		var link = document.createElement('link');
+		link.rel = 'stylesheet';
+		link.href = href;
+		link.setAttribute('data-vlt-preview-font', href.replace(/"/g, ''));
+		document.head.appendChild(link);
+	}
+
 	function rulesMatch(rules) {
 		return rules.every(function (rule) {
 			var value = settingValue(rule.setting);
@@ -114,25 +199,37 @@
 			return '';
 		}
 
-		var css = '';
-		var wider = '';
+		var saved = settingValue(id);
+		var blocks = {};
 
-		settingIds(id, field).forEach(function (settingId, index) {
-			var device = DEVICES[index];
-			var value = cssValue(field, settingValue(settingId));
+		field.output.forEach(function (rule) {
+			// No property: all the typography of the field
+			if (!rule.property) {
+				var declarations = 'typography' === field.type ? typographyCss(saved) : '';
 
-			// Empty or as the wider device: follows it
-			if ('' === value || value === wider) {
+				if (declarations) {
+					blocks[rule.media_query] = (blocks[rule.media_query] || '') + rule.element + '{' + declarations + '}';
+				}
+
 				return;
 			}
 
-			wider = value;
+			var value = cssValue(field, saved, rule.choice);
 
-			var block = field.style.map(function (rule) {
-				return rule.element + '{' + rule.property + ':' + rule.mask.split('$').join(value) + ';}';
-			}).join('');
+			if ('' === value) {
+				return;
+			}
 
-			css += 'desktop' === device ? block : '@media (max-width:' + data.breakpoints[device] + 'px){' + block + '}';
+			blocks[rule.media_query] = (blocks[rule.media_query] || '') + rule.element + '{' + rule.property + ':' + rule.value_pattern.split('$').join(value) + ';}';
+		});
+
+		// The plain rules first, then each media query
+		var css = blocks[''] || '';
+
+		Object.keys(blocks).forEach(function (media) {
+			if ('' !== media) {
+				css += media + '{' + blocks[media] + '}';
+			}
 		});
 
 		return css;
@@ -147,13 +244,17 @@
 			document.head.appendChild(style);
 		}
 
+		if ('typography' === field.type) {
+			loadFont(settingValue(id));
+		}
+
 		style.textContent = fieldCss(id, field);
 	}
 
 	api.bind('preview-ready', function () {
 		Object.keys(data.fields).forEach(function (id) {
 			var field = data.fields[id];
-			var watched = settingIds(id, field).concat(field.rules.map(function (rule) {
+			var watched = [id].concat(field.rules.map(function (rule) {
 				return rule.setting;
 			}));
 

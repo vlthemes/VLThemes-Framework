@@ -1,5 +1,5 @@
 /* ========================================
- * Customizer controls (Vanilla JS): changed dot, device switch, value field, typography, alpha color, repeater,
+ * Customizer controls (Vanilla JS): changed dot and reset, value field, typography, alpha color, repeater,
  * panel and section icons
  * ======================================== */
 document.addEventListener('DOMContentLoaded', function () {
@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', function () {
 	var fonts = window.vltFwCustomizerFonts || {};
 	var icons = window.vltFwCustomizerIcons || {};
 	var defaultValues = window.vltFwCustomizerDefaults || {};
-	var devices = window.vltFwCustomizerDevices || {};
 
 	wp.customize.bind('ready', function () {
 		wp.customize.control.each(function (control) {
@@ -32,17 +31,10 @@ document.addEventListener('DOMContentLoaded', function () {
 	});
 
 	/* ========================================
-	 * Field controls: the changed dot (click: reset), the device switch of responsive fields, the value field
+	 * Field controls: the changed dot and the reset button, the value field
 	 * ======================================== */
 	function initFieldControls() {
 		var api = wp.customize;
-		var setDevice = function (device) {
-			document.body.setAttribute('data-vlt-device', device);
-		};
-
-		// Responsive fields show the device being previewed
-		setDevice(api.previewedDevice.get() || 'desktop');
-		api.previewedDevice.bind(setDevice);
 
 		var init = function (control) {
 			control.deferred.embedded.done(function () {
@@ -50,7 +42,6 @@ document.addEventListener('DOMContentLoaded', function () {
 					initValueControl(control);
 				}
 
-				addDeviceSwitch(control);
 				addChangedDot(control);
 			});
 		};
@@ -132,68 +123,6 @@ document.addEventListener('DOMContentLoaded', function () {
 		update();
 	}
 
-	var DEVICE_ICONS = {
-		desktop: '<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M9 20h6M12 16v4"/>',
-		tablet: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M11 18h2"/>',
-		mobile: '<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>'
-	};
-
-	var DEVICE_LABELS = { desktop: 'Desktop', tablet: 'Tablet', mobile: 'Mobile' };
-
-	function addDeviceSwitch(control) {
-		var info = devices[control.id];
-
-		if (!info) {
-			return;
-		}
-
-		control.container.addClass('vlt-device-control vlt-device-control--' + info.device);
-
-		var title = controlTitle(control);
-
-		if (!title || title.querySelector('.vlt-devices')) {
-			return;
-		}
-
-		var group = document.createElement('span');
-		group.className = 'vlt-devices';
-
-		Object.keys(DEVICE_ICONS).forEach(function (device) {
-			var button = document.createElement('button');
-
-			button.type = 'button';
-			button.className = 'vlt-devices__item' + (device === info.device ? ' is-active' : '');
-			button.title = DEVICE_LABELS[device];
-			button.setAttribute('aria-label', DEVICE_LABELS[device]);
-			button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + DEVICE_ICONS[device] + '</svg>';
-
-			button.addEventListener('click', function (event) {
-				event.preventDefault();
-				wp.customize.previewedDevice.set(device);
-			});
-
-			group.appendChild(button);
-		});
-
-		title.classList.add('vlt-control-title');
-		title.appendChild(group);
-	}
-
-	// Settings of the wider devices of a responsive field, nearest first
-	function widerSettings(id) {
-		var info = devices[id];
-
-		if (!info) {
-			return [];
-		}
-
-		var order = ['desktop', 'tablet', 'mobile'];
-
-		return order.slice(0, order.indexOf(info.device)).reverse().map(function (device) {
-			return 'desktop' === device ? info.field : info.field + '_' + device;
-		});
-	}
-
 	/* ========================================
 	 * Value field (Modules/Core/Controls/ValueControl.php): a number with a unit, or a CSS function or keyword
 	 * picked from the unit menu; under it a ruler, dragged sideways or stepped with its arrows (Shift: by 10)
@@ -240,7 +169,11 @@ document.addEventListener('DOMContentLoaded', function () {
 		var min = params.min;
 		var max = params.max;
 		var step = parseFloat(params.step) || 1;
-		var wider = widerSettings(control.id);
+
+		// The step of the unit shown: unitSteps { rem: .05 }, else step
+		var stepOf = function () {
+			return (params.unitSteps && parseFloat(params.unitSteps[mode])) || step;
+		};
 
 		var mode = units[0];
 		var text = '';
@@ -257,8 +190,9 @@ document.addEventListener('DOMContentLoaded', function () {
 			var raw = String(null === value || undefined === value ? '' : value).trim();
 			var match = raw.match(/^(-?\d*\.?\d+)([a-z%]*)$/i);
 
+			// A bare number is unitless where that is a unit (a line height), else in units[0]
 			if (match && (!match[2] || units.indexOf(match[2].toLowerCase()) !== -1)) {
-				return { mode: match[2].toLowerCase() || units[0], text: match[1] };
+				return { mode: match[2].toLowerCase() || (units.indexOf('') !== -1 ? '' : units[0]), text: match[1] };
 			}
 
 			match = raw.match(/^(clamp|min|max|calc|var)\((.*)\)$/i);
@@ -298,30 +232,11 @@ document.addEventListener('DOMContentLoaded', function () {
 			return FUNCTIONS.indexOf(nextMode) !== -1 ? nextMode + '(' + value + ')' : value + nextMode;
 		};
 
-		// The value of the nearest wider device with one: shown as the placeholder
-		var inherited = function () {
-			for (var i = 0; i < wider.length; i++) {
-				var value = wp.customize(wider[i]) ? wp.customize(wider[i]).get() : '';
-
-				if (null !== value && undefined !== value && '' !== value) {
-					return value;
-				}
-			}
-
-			return '';
-		};
-
-		// The value in units[0]: the number typed, else the placeholder's
+		// The value in units[0]: the number typed, else 0
 		var stored = function () {
 			var number = parseFloat(text);
 
-			if (isNaN(number)) {
-				var fallback = parseFloat(numeric ? inherited() : parse(inherited()).text);
-
-				return isNaN(fallback) ? 0 : fallback * (numeric ? 1 : ratio(mode));
-			}
-
-			return number * ratio(mode);
+			return isNaN(number) ? 0 : number * ratio(mode);
 		};
 
 		// Markup
@@ -374,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function () {
 					item.className = 'vlt-value__menu-item';
 					item.setAttribute('role', 'option');
 					item.dataset.mode = option;
-					item.textContent = option;
+					item.textContent = option || '—';
 
 					item.addEventListener('click', function () {
 						select(option);
@@ -435,23 +350,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		};
 
 		var placeholder = function () {
-			var value = inherited();
-
-			if (keywords.indexOf(mode) !== -1) {
-				return mode;
-			}
-
-			if ('' === value) {
-				return FUNCTION_EXAMPLES[mode] || '';
-			}
-
-			if (numeric) {
-				return isNaN(parseFloat(value)) ? '' : tidy(parseFloat(value) / ratio(mode));
-			}
-
-			var parsed = parse(value);
-
-			return parsed.mode === mode ? parsed.text : String(value);
+			return keywords.indexOf(mode) !== -1 ? mode : FUNCTION_EXAMPLES[mode] || '';
 		};
 
 		var paint = function () {
@@ -462,7 +361,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			input.disabled = keyword;
 			input.inputMode = isLength() ? 'decimal' : 'text';
 			box.classList.toggle('is-disabled', keyword);
-			unit.textContent = mode;
+			unit.textContent = mode || (groups.length ? '—' : '');
 			unit.hidden = !groups.length && !mode;
 			ruler.hidden = !isLength();
 
@@ -508,7 +407,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		};
 
 		var stepBy = function (delta) {
-			turn(delta / step);
+			turn(delta / stepOf());
 			commit(mode, tidy(clampNumber(Math.round((stored() + delta) * 100) / 100, min, max) / ratio(mode)));
 		};
 
@@ -521,6 +420,9 @@ document.addEventListener('DOMContentLoaded', function () {
 				commit(next, '' === text.trim() ? '' : tidy(value / ratio(next)));
 			} else if (FUNCTIONS.indexOf(next) !== -1) {
 				commit(next, 'var' === next ? '' : (FUNCTIONS.indexOf(mode) !== -1 ? text : FUNCTION_EXAMPLES[next]));
+			} else if ((('' === mode && '%' === next) || ('%' === mode && '' === next)) && units.indexOf('') !== -1 && '' !== text.trim() && !isNaN(parseFloat(text))) {
+				// A unitless number (a line height) and a percent: 1.65 is 165%
+				commit(next, tidy(parseFloat(text) * ('%' === next ? 100 : 0.01)));
 			} else if (TIME[mode] && TIME[next] && '' !== text.trim() && !isNaN(parseFloat(text))) {
 				var time = stored();
 
@@ -553,7 +455,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			var to = parseFloat(input.value);
 
 			if (isLength() && !isNaN(from) && !isNaN(to)) {
-				turn(((to - from) * ratio(mode)) / step);
+				turn(((to - from) * ratio(mode)) / stepOf());
 			}
 
 			commit(mode, input.value);
@@ -562,16 +464,16 @@ document.addEventListener('DOMContentLoaded', function () {
 		input.addEventListener('keydown', function (event) {
 			if (isLength() && ('ArrowUp' === event.key || 'ArrowDown' === event.key)) {
 				event.preventDefault();
-				stepBy(('ArrowUp' === event.key ? 1 : -1) * step * (event.shiftKey ? 10 : 1));
+				stepBy(('ArrowUp' === event.key ? 1 : -1) * stepOf() * (event.shiftKey ? 10 : 1));
 			}
 		});
 
 		steps[0].addEventListener('click', function (event) {
-			stepBy(-step * (event.shiftKey ? 10 : 1));
+			stepBy(-stepOf() * (event.shiftKey ? 10 : 1));
 		});
 
 		steps[1].addEventListener('click', function (event) {
-			stepBy(step * (event.shiftKey ? 10 : 1));
+			stepBy(stepOf() * (event.shiftKey ? 10 : 1));
 		});
 
 		track.addEventListener('pointerdown', function (event) {
@@ -589,13 +491,27 @@ document.addEventListener('DOMContentLoaded', function () {
 				return;
 			}
 
+			// Let go where no pointerup came (over the preview frame, out of the window): the drag is over
+			if (!event.buttons) {
+				release();
+
+				return;
+			}
+
 			var count = (event.clientX - drag.x) * (event.shiftKey ? 10 : 1);
 			var state = drag;
+			var rect = track.getBoundingClientRect();
+
+			state.x = event.clientX;
+
+			// Off the track (a little slack above and below it) the value stays; back on it, it goes on from where the pointer is
+			if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top - 8 || event.clientY > rect.bottom + 8) {
+				return;
+			}
 
 			turn(count);
-			state.x = event.clientX;
-			state.value = clampNumber(state.value + count * step, min, max);
-			state.text = tidy((Math.round(state.value / step) * step) / ratio(mode));
+			state.value = clampNumber(state.value + count * stepOf(), min, max);
+			state.text = tidy((Math.round(state.value / stepOf()) * stepOf()) / ratio(mode));
 
 			// The setting (and the preview) once a frame
 			if (!state.frame) {
@@ -607,7 +523,11 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 
 		var release = function () {
-			if (drag && drag.frame) {
+			if (!drag) {
+				return;
+			}
+
+			if (drag.frame) {
 				cancelAnimationFrame(drag.frame);
 				commit(mode, drag.text);
 			}
@@ -616,21 +536,18 @@ document.addEventListener('DOMContentLoaded', function () {
 			root.classList.remove('is-dragging');
 		};
 
+		// Each way a drag ends: let go on the track or anywhere, the capture lost, the window left
 		track.addEventListener('pointerup', release);
 		track.addEventListener('pointercancel', release);
+		track.addEventListener('lostpointercapture', release);
+		window.addEventListener('pointerup', release);
+		window.addEventListener('blur', release);
 
 		// A new value from outside (a reset, the setting loaded): shown; what this field sent stays as typed
 		control.setting.bind(function (value) {
 			if (JSON.stringify(value) !== sent) {
 				show(value);
 			}
-		});
-
-		// The wider devices change the placeholder
-		wider.forEach(function (id) {
-			wp.customize(id, function (setting) {
-				setting.bind(paint);
-			});
 		});
 
 		show(control.setting.get());
@@ -1004,58 +921,168 @@ document.addEventListener('DOMContentLoaded', function () {
 			: [];
 	}
 
+	// Typography properties in the order of Customizer::TYPOGRAPHY: the value keeps it
+	var TYPOGRAPHY = ['font-size', 'line-height', 'letter-spacing', 'word-spacing', 'font-weight', 'font-style', 'text-transform', 'text-decoration'];
+
+	// The lengths as value fields; a line height without a unit is unitless
+	var TYPOGRAPHY_LENGTHS = {
+		'font-size': { units: ['px', 'rem', 'em', 'vw', '%'], functions: FUNCTIONS, keywords: [], unitSteps: { rem: 0.05, em: 0.05, vw: 0.1 } },
+		'line-height': { units: ['%', '', 'px', 'em', 'rem'], functions: ['calc', 'var'], keywords: ['normal'], unitSteps: { '': 0.01, em: 0.01, rem: 0.05 } },
+		'letter-spacing': { units: ['em', 'px', 'rem'], functions: ['calc', 'var'], keywords: ['normal'], unitSteps: { em: 0.005, px: 0.1, rem: 0.005 } },
+		'word-spacing': { units: ['px', 'em', 'rem'], functions: ['calc', 'var'], keywords: ['normal'], unitSteps: { em: 0.01, rem: 0.01 } }
+	};
+
+	// A toggle off: the value that undoes it
+	var TYPOGRAPHY_OFF = { 'font-style': 'normal', 'text-transform': 'none', 'text-decoration': 'none' };
+
 	function initTypographyControl(wrapper, control) {
 		var familySelect    = wrapper.querySelector('.vlt-typography-control__family-select');
 		var variantsWrapper = wrapper.querySelector('.vlt-typography-control__variants');
 		var variantsSelect  = wrapper.querySelector('.vlt-typography-control__variants-select');
 		var hiddenInput     = wrapper.querySelector('.vlt-typography-control__value');
+		var selects         = Array.prototype.slice.call(wrapper.querySelectorAll('select[data-property]'));
+		var toggles         = Array.prototype.slice.call(wrapper.querySelectorAll('[data-toggle]'));
+		var lengths         = {};
 
-		if (!familySelect || !variantsWrapper || !variantsSelect || !hiddenInput) {
+		if (!hiddenInput || wrapper.dataset.ready) {
 			return;
 		}
 
-		familySelect.addEventListener('change', function () {
-			populateVariants(variantsWrapper, variantsSelect, familySelect.value, []);
-			updateValue();
+		wrapper.dataset.ready = '1';
+
+		var parse = function (value) {
+			try {
+				var parsed = JSON.parse(value || '{}');
+
+				return parsed && 'object' === typeof parsed ? parsed : {};
+			} catch (err) {
+				return {};
+			}
+		};
+
+		var data = parse(control.setting.get());
+		var sent;
+
+		// Family, variants, then the properties set: the shape Customizer::typography_default() gives a default
+		var write = function () {
+			var value = { family: data.family || '', variants: Array.isArray(data.variants) ? data.variants : [] };
+
+			TYPOGRAPHY.forEach(function (property) {
+				if (undefined !== data[property] && null !== data[property] && '' !== String(data[property]).trim()) {
+					value[property] = String(data[property]);
+				}
+			});
+
+			sent = JSON.stringify(value);
+			hiddenInput.value = sent;
+			hiddenInput.dispatchEvent(new Event('change'));
+		};
+
+		var paint = function () {
+			if (familySelect && familySelect.value !== (data.family || '')) {
+				familySelect.value = data.family || '';
+			}
+
+			selects.forEach(function (select) {
+				select.value = data[select.getAttribute('data-property')] || '';
+			});
+
+			toggles.forEach(function (toggle) {
+				var on = data[toggle.getAttribute('data-property')] === toggle.getAttribute('data-toggle');
+
+				toggle.classList.toggle('is-active', on);
+				toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+			});
+
+			Object.keys(lengths).forEach(function (property) {
+				lengths[property].forEach(function (listener) {
+					listener(data[property] || '');
+				});
+			});
+		};
+
+		if (familySelect) {
+			familySelect.addEventListener('change', function () {
+				data.family = familySelect.value;
+				data.variants = [];
+
+				if (variantsSelect) {
+					populateVariants(variantsWrapper, variantsSelect, data.family, []);
+				}
+
+				write();
+			});
+		}
+
+		if (variantsSelect) {
+			variantsSelect.addEventListener('change', function () {
+				data.variants = isGoogleFont(data.family)
+					? Array.prototype.slice.call(variantsSelect.selectedOptions).map(function (option) { return option.value; })
+					: [];
+
+				write();
+			});
+		}
+
+		selects.forEach(function (select) {
+			select.addEventListener('change', function () {
+				data[select.getAttribute('data-property')] = select.value;
+				write();
+			});
 		});
 
-		variantsSelect.addEventListener('change', updateValue);
+		// One of a group (case, decoration) at a time; a second click turns it off
+		toggles.forEach(function (toggle) {
+			toggle.addEventListener('click', function () {
+				var property = toggle.getAttribute('data-property');
+				var on = toggle.getAttribute('data-toggle');
 
-		function updateValue() {
-			var isGoogle = isGoogleFont(familySelect.value);
-
-			var selectedVariants = isGoogle
-				? Array.prototype.slice.call(variantsSelect.selectedOptions).map(function (option) { return option.value; })
-				: [];
-
-			var value = JSON.stringify({
-				family: familySelect.value,
-				variants: selectedVariants
+				data[property] = data[property] === on ? TYPOGRAPHY_OFF[property] : on;
+				write();
+				paint();
 			});
+		});
 
-			hiddenInput.value = value;
-			hiddenInput.dispatchEvent(new Event('change'));
-		}
+		// Each length a value field: its setting is a key of this one
+		wrapper.querySelectorAll('[data-length]').forEach(function (field) {
+			var property = field.getAttribute('data-length');
 
-		// Re-render the family/variants selects when the setting changes
-		// programmatically (e.g. via the reset-to-default button).
-		if (control && control.setting) {
-			control.setting.bind(function (newValue) {
-				var parsed = {};
+			lengths[property] = [];
 
-				try {
-					parsed = JSON.parse(newValue || '{}');
-				} catch (err) {
-					parsed = {};
+			initValueControl({
+				id: control.id + '-' + property,
+				container: jQuery(field),
+				params: TYPOGRAPHY_LENGTHS[property],
+				setting: {
+					get: function () {
+						return data[property] || '';
+					},
+					set: function (value) {
+						data[property] = value;
+						write();
+					},
+					bind: function (listener) {
+						lengths[property].push(listener);
+					}
 				}
-
-				if (familySelect.value !== (parsed.family || '')) {
-					familySelect.value = parsed.family || '';
-				}
-
-				populateVariants(variantsWrapper, variantsSelect, parsed.family || '', parsed.variants || []);
 			});
-		}
+		});
+
+		// A new value from outside (a reset): shown; what this control sent stays as it is
+		control.setting.bind(function (value) {
+			if (value === sent) {
+				return;
+			}
+
+			data = parse(value);
+			paint();
+
+			if (variantsSelect) {
+				populateVariants(variantsWrapper, variantsSelect, data.family || '', data.variants || []);
+			}
+		});
+
+		paint();
 	}
 
 	function isGoogleFont(family) {

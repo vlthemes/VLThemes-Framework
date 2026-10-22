@@ -496,25 +496,6 @@ if ( !function_exists( 'vlt_fw_get_setting_choices' ) ) {
 }
 
 /**
- * Get the values of a responsive Customizer field ('responsive' => true) per device
- *
- * An empty device takes the value of the wider one.
- *
- * @param string $setting_id The setting ID
- *
- * @return array [ 'desktop' => …, 'tablet' => …, 'mobile' => … ]
- */
-if ( !function_exists( 'vlt_fw_get_responsive_option' ) ) {
-	function vlt_fw_get_responsive_option( $setting_id ) {
-		if ( class_exists( '\VLT\Framework\Modules\Core\Customizer' ) ) {
-			return VLT\Framework\Modules\Core\Customizer::get_responsive_option( $setting_id );
-		}
-
-		return [];
-	}
-}
-
-/**
  * Convert pixels to rem units
  *
  * Converts pixel values to rem units for better scalability and accessibility.

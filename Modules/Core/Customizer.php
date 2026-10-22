@@ -20,37 +20,43 @@ if ( !defined( 'ABSPATH' ) ) {
  * Fields are queued with Customizer::add_field(). Besides the WordPress control args a field takes:
  *
  *     Customizer::add_field( [
- *         'type'       => 'dimension',
- *         'settings'   => 'header_logo_height',
- *         'section'    => 'section_header_general',
- *         'label'      => esc_html__( 'Logo Height', '@@textdomain' ),
- *         'default'    => [ 'desktop' => '18px', 'mobile' => '16px' ],
- *         'units'      => [ 'px', 'rem' ],
- *         'responsive' => true,
- *         'style'      => [ [ 'element' => '.vlt-navbar-logo img', 'property' => 'height' ] ],
+ *         'type'     => 'dimension',
+ *         'settings' => 'header_logo_height',
+ *         'section'  => 'section_header_general',
+ *         'label'    => esc_html__( 'Logo Height', '@@textdomain' ),
+ *         'default'  => '18px',
+ *         'units'    => [ 'px', 'rem' ],
+ *         'output'   => [
+ *             [ 'element' => '.vlt-navbar-logo img', 'property' => 'height' ],
+ *             [ 'element' => '.vlt-navbar-logo img', 'property' => 'height', 'value_pattern' => 'calc($ * .8)', 'media_query' => '@media (max-width: 575px)' ],
+ *         ],
  *     ] );
  *
  * - dimension: a CSS value, '18px', '80vh', '300ms' ('units' => [ 'px', 'vh' ], 'functions' => true for clamp() /
  *   min() / max() / calc() / var() or a list of them, e.g. [ 'var' ], 'keywords' => [ 'auto' ]).
  * - number: a number (min, max, step or input_attrs; 'unit' => 'px' shown next to it and added in the CSS,
  *   'units' => [ 'ms', 's' ] for a time kept in ms).
- * - responsive: one value per device of the preview (desktop, tablet, mobile), switched with the device buttons
- *   of the label. Tablet and mobile are saved as "{settings}_tablet" and "{settings}_mobile"; an empty one follows
- *   the wider device. The default is a value (desktop) or [ device => value ].
- * - style: [ element, property, mask ] rules, the CSS of the field (wp_head, live in the preview). Mask defaults
- *   to "$" (the value); a mask without "$" is printed as it is while the field has a value. Tablet and mobile go
- *   into @media (max-width) of Customizer::get_breakpoints(). Fields hidden by their active_callback print none.
+ * - typography: a font, {"family":…,"variants":[…]} ('properties' => true for all of Customizer::TYPOGRAPHY
+ *   too, or a list of them, e.g. [ 'font-size', 'font-weight' ]; a length without a unit is px, line height none;
+ *   'family' => false for no font select, e.g. a field of sizes for phones; 'icon' => 'dashicons-tablet' before
+ *   the label). Its default can be an array:
+ *   [ 'family' => 'Mulish', 'font-size' => '1rem' ].
+ * - output: the CSS of the field, rules of
+ *   - element, property: the selector and the property (a custom property too: '--vlt-primary-font'); a typography
+ *     field without a property prints all of its own (font-family, font-size, …);
+ *   - value_pattern: '$' is the value (the default); a pattern without '$' is printed as it is while the field
+ *     has a value, e.g. 'cover' for background-size next to an image;
+ *   - media_query: the rule inside it, e.g. '@media (max-width: 575px)';
+ *   - choice: a key of the value, e.g. 'font-family' of a typography field;
+ *   - context: [ 'front' ] (the default), 'editor' for the block editor too.
+ *   Printed in wp_head (and the block editor), live in the Customizer preview. Fields hidden by their
+ *   active_callback print none.
  *
  * A field whose value is not the default shows a dot by its label and, on hover, a reset button.
  */
 class Customizer extends BaseModule {
 	protected $name    = 'customizer';
 	protected $version = '1.0.0';
-
-	/**
-	 * Devices of the preview, widest first: a device without a value follows the wider one
-	 */
-	const DEVICES = [ 'desktop', 'tablet', 'mobile' ];
 
 	/**
 	 * CSS functions a dimension field can offer
@@ -62,6 +68,22 @@ class Customizer extends BaseModule {
 	 */
 	const UNITS = [ 'px', '%', 'em', 'rem', 'vw', 'vh' ];
 
+	/**
+	 * Typography properties: CSS lengths first, then the ones with choices (here, not in TypographyControl:
+	 * the front end has no WP_Customize_Control to load it on)
+	 */
+	const TYPOGRAPHY = [ 'font-size', 'line-height', 'letter-spacing', 'word-spacing', 'font-weight', 'font-style', 'text-transform', 'text-decoration' ];
+
+	/**
+	 * Values of the typography properties with choices: value => label (the control's toggles are some of them)
+	 */
+	const TYPOGRAPHY_CHOICES = [
+		'font-weight'     => [ '100' => '100 Thin', '200' => '200 Extra Light', '300' => '300 Light', '400' => '400 Regular', '500' => '500 Medium', '600' => '600 Semi Bold', '700' => '700 Bold', '800' => '800 Extra Bold', '900' => '900 Black', 'normal' => 'Normal', 'bold' => 'Bold' ],
+		'font-style'      => [ 'normal' => 'Normal', 'italic' => 'Italic', 'oblique' => 'Oblique' ],
+		'text-transform'  => [ 'uppercase' => 'Uppercase', 'lowercase' => 'Lowercase', 'capitalize' => 'Capitalize', 'none' => 'None' ],
+		'text-decoration' => [ 'underline' => 'Underline', 'overline' => 'Overline', 'line-through' => 'Line Through', 'none' => 'None' ],
+	];
+
 	private static $queue            = [
 		'panels'   => [],
 		'sections' => [],
@@ -71,18 +93,11 @@ class Customizer extends BaseModule {
 	private static $registered_choices = [];
 
 	/**
-	 * Fields with style rules [ settings => field ]
+	 * Fields with output rules [ settings => field ]
 	 *
 	 * @var array
 	 */
-	private static $styled = [];
-
-	/**
-	 * Device fields [ settings => [ 'field' => desktop settings, 'device' => device ] ]
-	 *
-	 * @var array
-	 */
-	private static $devices = [];
+	private static $outputs = [];
 
 	/**
 	 * Register module
@@ -100,6 +115,7 @@ class Customizer extends BaseModule {
 
 		add_action( 'customize_controls_enqueue_scripts', [ $this, 'enqueue_control_assets' ] );
 		add_action( 'customize_preview_init', [ $this, 'enqueue_preview_assets' ] );
+		add_action( 'enqueue_block_assets', [ $this, 'enqueue_editor_css' ] );
 
 		add_filter( 'vlt_fw_google_fonts', [ $this, 'collect_typography_google_fonts' ] );
 	}
@@ -118,6 +134,9 @@ class Customizer extends BaseModule {
 			$fonts
 		);
 
+		// Weights of each family [ lowercase family => [ family, weights ] ]: fields of one family share one request
+		$families = [];
+
 		foreach ( self::$queue['fields'] as $field ) {
 			if ( 'typography' !== ( $field['type'] ?? '' ) ) {
 				continue;
@@ -129,21 +148,24 @@ class Customizer extends BaseModule {
 				continue;
 			}
 
+			$key = strtolower( trim( $value['family'] ) );
+
 			// Only queue families that are actually Google Fonts — custom,
 			// TypeKit, or theme-registered fonts are not served from
 			// fonts.googleapis.com and must not be requested from there.
-			if ( !isset( $google_fonts[ strtolower( trim( $value['family'] ) ) ] ) ) {
+			if ( !isset( $google_fonts[ $key ] ) ) {
 				continue;
 			}
 
 			// Skip if the theme already registered this family (e.g. with a
 			// variable-font axis range) to avoid conflicting duplicate
 			// family= params in the Google Fonts CSS2 URL.
-			if ( in_array( strtolower( trim( $value['family'] ) ), $registered_families, true ) ) {
+			if ( in_array( $key, $registered_families, true ) ) {
 				continue;
 			}
 
-			$variants = !empty( $value['variants'] ) && is_array( $value['variants'] ) ? $value['variants'] : [ 'regular' ];
+			// The variants, else the weight of a field with properties
+			$variants = !empty( $value['variants'] ) && is_array( $value['variants'] ) ? $value['variants'] : [ (string) ( $value['font-weight'] ?? 'regular' ) ];
 
 			$weights = array_map(
 				function ( $variant ) {
@@ -151,20 +173,30 @@ class Customizer extends BaseModule {
 						return 400;
 					}
 
+					if ( 'bold' === $variant ) {
+						return 700;
+					}
+
 					return (int) preg_replace( '/[^0-9]/', '', $variant ) ?: 400;
 				},
 				$variants
 			);
 
-			$weights = array_unique( $weights );
+			$families[ $key ] = [
+				'family'  => $families[ $key ]['family'] ?? $value['family'],
+				'weights' => array_merge( $families[ $key ]['weights'] ?? [], $weights ),
+			];
+		}
+
+		foreach ( $families as $font ) {
+			$weights = array_unique( $font['weights'] );
 			sort( $weights );
 
 			$axis = ( count( $weights ) > 1 )
 				? 'wght@' . reset( $weights ) . '..' . end( $weights )
 				: 'wght@' . reset( $weights );
 
-			$fonts[]               = $value['family'] . ':' . $axis;
-			$registered_families[] = strtolower( trim( $value['family'] ) );
+			$fonts[] = $font['family'] . ':' . $axis;
 		}
 
 		return array_unique( $fonts );
@@ -193,22 +225,14 @@ class Customizer extends BaseModule {
 			'vlt-customizer-controls',
 			'window.vltFwCustomizerFonts = ' . wp_json_encode( $this->get_typography_control_fonts() ) . ';'
 				. 'window.vltFwCustomizerIcons = ' . wp_json_encode( $this->get_icons() ) . ';'
-				. 'window.vltFwCustomizerDefaults = ' . wp_json_encode( $this->get_field_defaults() ) . ';'
-				. 'window.vltFwCustomizerDevices = ' . wp_json_encode( self::$devices ) . ';',
+				. 'window.vltFwCustomizerDefaults = ' . wp_json_encode( $this->get_field_defaults() ) . ';',
 			'before'
 		);
 
-		// The tablet preview as wide as the tablet breakpoint starts (WordPress shows 720px, a mobile width here)
-		$tablet_width = self::get_breakpoints()['mobile'] + 1;
-
-		wp_add_inline_style(
-			'vlt-customizer-controls',
-			sprintf( '.wp-full-overlay.preview-tablet .wp-full-overlay-main{width:%1$dpx;margin-left:-%2$dpx}', $tablet_width, $tablet_width / 2 )
-		);
 	}
 
 	/**
-	 * Preview: the CSS of the fields with style rules, rebuilt as they change
+	 * Preview: the CSS of the fields with output rules, rebuilt as they change
 	 */
 	public function enqueue_preview_assets() {
 		wp_enqueue_script(
@@ -221,38 +245,45 @@ class Customizer extends BaseModule {
 
 		$fields = [];
 
-		foreach ( self::$styled as $id => $field ) {
-			$fields[ $id ] = [
-				'type'       => $field['type'] ?? 'text',
-				'unit'       => self::number_units( $field )[0],
-				'units'      => self::dimension_units( $field ),
-				'keywords'   => self::dimension_keywords( $field ),
-				'responsive' => !empty( $field['responsive'] ),
-				'style'      => $field['style'],
-				'rules'      => is_array( $field['active_callback'] ?? null ) ? array_values( $field['active_callback'] ) : [],
-			];
+		foreach ( self::$outputs as $id => $field ) {
+			$rules = array_values( array_filter( $field['output'], fn( $rule ) => in_array( 'front', $rule['context'], true ) ) );
+
+			if ( $rules ) {
+				$fields[ $id ] = [
+					'type'     => $field['type'] ?? 'text',
+					'unit'     => self::number_units( $field )[0],
+					'units'    => self::dimension_units( $field ),
+					'keywords' => self::dimension_keywords( $field ),
+					'output'   => $rules,
+					'rules'    => is_array( $field['active_callback'] ?? null ) ? array_values( $field['active_callback'] ) : [],
+				];
+			}
 		}
 
 		wp_add_inline_script(
 			'vlt-customizer-preview',
-			'window.vltFwCustomizerCss = ' . wp_json_encode( [ 'fields' => $fields, 'breakpoints' => self::get_breakpoints() ] ) . ';',
+			'window.vltFwCustomizerCss = ' . wp_json_encode( [ 'fields' => $fields ] ) . ';',
 			'before'
 		);
 	}
 
 	/**
-	 * Max widths of the devices below desktop, px
-	 *
-	 * @return array [ 'tablet' => int, 'mobile' => int ]
+	 * Block editor: the output rules with the 'editor' context
 	 */
-	public static function get_breakpoints() {
-		return wp_parse_args(
-			array_map( 'absint', (array) apply_filters( 'vlt_fw_customizer_breakpoints', [] ) ),
-			[
-				'tablet' => 991,
-				'mobile' => 767
-			]
-		);
+	public function enqueue_editor_css() {
+		if ( !is_admin() ) {
+			return;
+		}
+
+		$css = self::get_css( 'editor' );
+
+		if ( '' === $css ) {
+			return;
+		}
+
+		wp_register_style( 'vlt-customizer-editor', false, [], $this->version );
+		wp_enqueue_style( 'vlt-customizer-editor' );
+		wp_add_inline_style( 'vlt-customizer-editor', wp_strip_all_tags( $css ) );
 	}
 
 	/**
@@ -392,13 +423,13 @@ class Customizer extends BaseModule {
 	public function output_dynamic_css() {
 		// The preview gets a style tag per field: customizer-preview.js rewrites it as the field changes
 		if ( is_customize_preview() ) {
-			foreach ( self::$styled as $id => $field ) {
+			foreach ( self::$outputs as $id => $field ) {
 				echo '<style id="' . esc_attr( 'vlt-customizer-css-' . $id ) . '">' . wp_strip_all_tags( self::get_field_css( $field ) ) . '</style>' . "\n";
 			}
 
 			$css = '';
 		} else {
-			$css = implode( '', array_map( [ __CLASS__, 'get_field_css' ], self::$styled ) );
+			$css = self::get_css();
 		}
 
 		// CSS no field rule gives (a theme's own)
@@ -412,38 +443,94 @@ class Customizer extends BaseModule {
 	}
 
 	/**
-	 * CSS of a field's style rules: desktop, then tablet and mobile in their media queries
+	 * CSS of all fields' output rules of a context, the rules of one media query together
 	 *
-	 * @param array $field Queued field
+	 * @param string $context front or editor
+	 *
+	 * @return string
+	 */
+	public static function get_css( $context = 'front' ) {
+		$blocks = [];
+
+		foreach ( self::$outputs as $field ) {
+			foreach ( self::field_blocks( $field, $context ) as $media => $css ) {
+				$blocks[ $media ] = ( $blocks[ $media ] ?? '' ) . $css;
+			}
+		}
+
+		return self::join_blocks( $blocks );
+	}
+
+	/**
+	 * CSS of a field's output rules
+	 *
+	 * @param array  $field   Queued field
+	 * @param string $context front or editor
 	 *
 	 * @return string '' while the field is hidden by its active_callback or has no value
 	 */
-	public static function get_field_css( $field ) {
+	public static function get_field_css( $field, $context = 'front' ) {
+		return self::join_blocks( self::field_blocks( $field, $context ) );
+	}
+
+	/**
+	 * Declarations of a field by media query
+	 *
+	 * @param array  $field   Queued field
+	 * @param string $context front or editor
+	 *
+	 * @return array [ media query ('' = none) => css ]
+	 */
+	private static function field_blocks( $field, $context ) {
 		if ( !self::rules_match( $field['active_callback'] ?? null, [ __CLASS__, 'get_option' ] ) ) {
-			return '';
+			return [];
 		}
 
-		$values      = !empty( $field['responsive'] ) ? self::get_responsive_option( $field['settings'] ) : [ 'desktop' => self::get_option( $field['settings'] ) ];
-		$breakpoints = self::get_breakpoints();
-		$wider       = '';
-		$css         = '';
+		$saved  = self::get_option( $field['settings'] );
+		$blocks = [];
 
-		foreach ( $values as $device => $value ) {
-			$value = self::css_value( $field, $value );
-
-			// Empty or as the wider device: follows it
-			if ( '' === $value || $value === $wider ) {
+		foreach ( $field['output'] as $rule ) {
+			if ( !in_array( $context, $rule['context'], true ) ) {
 				continue;
 			}
 
-			$wider = $value;
-			$block = '';
+			// No property: all the typography of the field
+			if ( '' === $rule['property'] ) {
+				$css = 'typography' === ( $field['type'] ?? '' ) ? self::typography_css( $saved ) : '';
 
-			foreach ( $field['style'] as $rule ) {
-				$block .= $rule['element'] . '{' . $rule['property'] . ':' . str_replace( '$', $value, $rule['mask'] ) . ';}';
+				if ( '' !== $css ) {
+					$blocks[ $rule['media_query'] ] = ( $blocks[ $rule['media_query'] ] ?? '' ) . $rule['element'] . '{' . $css . '}';
+				}
+
+				continue;
 			}
 
-			$css .= 'desktop' === $device ? $block : sprintf( '@media (max-width:%dpx){%s}', $breakpoints[ $device ], $block );
+			$value = self::css_value( $field, $saved, $rule['choice'] );
+
+			if ( '' === $value ) {
+				continue;
+			}
+
+			$blocks[ $rule['media_query'] ] = ( $blocks[ $rule['media_query'] ] ?? '' ) . $rule['element'] . '{' . $rule['property'] . ':' . str_replace( '$', $value, $rule['value_pattern'] ) . ';}';
+		}
+
+		return $blocks;
+	}
+
+	/**
+	 * Blocks by media query as CSS: the plain rules first
+	 *
+	 * @param array $blocks [ media query => css ]
+	 *
+	 * @return string
+	 */
+	private static function join_blocks( array $blocks ) {
+		$css = $blocks[''] ?? '';
+
+		unset( $blocks[''] );
+
+		foreach ( $blocks as $media => $block ) {
+			$css .= $media . '{' . $block . '}';
 		}
 
 		return $css;
@@ -452,12 +539,21 @@ class Customizer extends BaseModule {
 	/**
 	 * Value of a field as CSS
 	 *
-	 * @param array $field Queued field
-	 * @param mixed $value Saved value
+	 * @param array  $field  Queued field
+	 * @param mixed  $value  Saved value
+	 * @param string $choice Key of an array or JSON value ('' = the value itself)
 	 *
 	 * @return string
 	 */
-	private static function css_value( $field, $value ) {
+	private static function css_value( $field, $value, $choice = '' ) {
+		// A key of the value: font-family of a typography field ({"family":…}), or of any array value
+		if ( '' !== $choice ) {
+			$data  = is_array( $value ) ? $value : json_decode( (string) $value, true );
+			$value = is_array( $data ) ? ( $data[ $choice ] ?? ( 'font-family' === $choice ? $data['family'] ?? '' : '' ) ) : '';
+
+			return '' === trim( (string) $value ) || !is_scalar( $value ) ? '' : ( 'font-family' === $choice ? '"' . self::strip_css( $value ) . '"' : self::strip_css( $value ) );
+		}
+
 		if ( !is_scalar( $value ) ) {
 			return '';
 		}
@@ -492,6 +588,92 @@ class Customizer extends BaseModule {
 			default:
 				return self::strip_css( $value );
 		}
+	}
+
+	/**
+	 * Declarations of a typography value: font-family and each property set
+	 *
+	 * @param mixed $value Saved value (JSON)
+	 *
+	 * @return string
+	 */
+	private static function typography_css( $value ) {
+		$data = is_array( $value ) ? $value : json_decode( (string) $value, true );
+
+		if ( !is_array( $data ) ) {
+			return '';
+		}
+
+		$css = empty( $data['family'] ) ? '' : 'font-family:"' . self::strip_css( $data['family'] ) . '";';
+
+		foreach ( self::TYPOGRAPHY as $property ) {
+			$part = self::typography_value( $property, $data[ $property ] ?? '' );
+
+			if ( '' !== $part ) {
+				$css .= $property . ':' . $part . ';';
+			}
+		}
+
+		return $css;
+	}
+
+	/**
+	 * A value of a typography property: one of its choices, or a length (px without a unit, none for line height)
+	 *
+	 * @param string $property One of self::TYPOGRAPHY
+	 * @param mixed  $value    Raw
+	 *
+	 * @return string
+	 */
+	private static function typography_value( $property, $value ) {
+		$value = is_scalar( $value ) ? strtolower( trim( (string) $value ) ) : '';
+
+		if ( '' === $value ) {
+			return '';
+		}
+
+		if ( isset( self::TYPOGRAPHY_CHOICES[ $property ] ) ) {
+			return isset( self::TYPOGRAPHY_CHOICES[ $property ][ $value ] ) ? $value : '';
+		}
+
+		if ( 'line-height' === $property && is_numeric( $value ) ) {
+			return (string) ( $value + 0 );
+		}
+
+		return self::dimension_value( [ 'units' => [ 'px', 'em', 'rem', '%', 'vw', 'vh' ], 'functions' => true, 'keywords' => [ 'normal' ] ], $value );
+	}
+
+	/**
+	 * A typography default (array or JSON) as JSON: family, variants, then the properties in their order
+	 *
+	 * @param mixed $value Raw default
+	 *
+	 * @return string
+	 */
+	private static function typography_default( $value ) {
+		$data    = is_array( $value ) ? $value : json_decode( (string) $value, true );
+		$data    = is_array( $data ) ? $data : [];
+		$default = [
+			'family'   => (string) ( $data['family'] ?? '' ),
+			'variants' => array_values( (array) ( $data['variants'] ?? [] ) ),
+		];
+
+		foreach ( self::TYPOGRAPHY as $property ) {
+			if ( isset( $data[ $property ] ) && '' !== (string) $data[ $property ] ) {
+				$default[ $property ] = (string) $data[ $property ];
+			}
+		}
+
+		return wp_json_encode( $default );
+	}
+
+	/**
+	 * Properties of a typography field: 'properties' => true for all, or a list (none by default)
+	 */
+	private static function typography_properties( $field ) {
+		$properties = $field['properties'] ?? [];
+
+		return true === $properties ? self::TYPOGRAPHY : array_values( array_intersect( self::TYPOGRAPHY, (array) $properties ) );
 	}
 
 	/**
@@ -571,27 +753,34 @@ class Customizer extends BaseModule {
 	}
 
 	/**
-	 * Style rules of a field: [ [ element, property, mask ], … ]
+	 * Output rules of a field: [ [ element, property, value_pattern, media_query, choice, context ], … ]
 	 *
-	 * @param mixed $style Raw rules
+	 * @param mixed $output Raw rules
 	 *
 	 * @return array
 	 */
-	private static function style_rules( $style ) {
+	private static function output_rules( $output ) {
 		$rules = [];
 
-		foreach ( (array) $style as $rule ) {
+		foreach ( (array) $output as $rule ) {
 			$property = (string) ( $rule['property'] ?? '' );
-			$element  = trim( (string) preg_replace( '/[{}<>;@\\\\]+/', '', (string) ( $rule['element'] ?? '' ) ) );
+			$element  = trim( (string) preg_replace( '/[{}<>;@\\\\]+/', '', implode( ',', (array) ( $rule['element'] ?? '' ) ) ) );
+			$media    = trim( (string) preg_replace( '/[{};<>\\\\]+/', '', (string) ( $rule['media_query'] ?? '' ) ) );
+			$context  = array_values( array_intersect( [ 'front', 'editor' ], (array) ( $rule['context'] ?? [ 'front' ] ) ) );
 
-			if ( '' === $element || !preg_match( '/^(?:--[A-Za-z0-9_-]+|[a-z][a-z-]*)$/', $property ) ) {
+			// A media query is an at-rule (@media, @supports, @container): a rule with another one is left out
+			// No property: a typography field prints all of its own
+			if ( '' === $element || ( '' !== $property && !preg_match( '/^(?:--[A-Za-z0-9_-]+|[a-z][a-z-]*)$/', $property ) ) || ( '' !== $media && !preg_match( '/^@(media|supports|container)\b/', $media ) ) ) {
 				continue;
 			}
 
 			$rules[] = [
-				'element'  => $element,
-				'property' => $property,
-				'mask'     => self::strip_css( $rule['mask'] ?? '' ) ?: '$',
+				'element'       => $element,
+				'property'      => $property,
+				'value_pattern' => self::strip_css( $rule['value_pattern'] ?? '' ) ?: '$',
+				'media_query'   => $media,
+				'choice'        => sanitize_key( (string) ( $rule['choice'] ?? '' ) ),
+				'context'       => $context ?: [ 'front' ],
 			];
 		}
 
@@ -628,40 +817,20 @@ class Customizer extends BaseModule {
 			return;
 		}
 
-		$args['responsive'] = !empty( $args['responsive'] ) && !in_array( $args['type'] ?? 'text', [ 'divider', 'notice', 'repeater' ], true );
+		// A typography default as the control writes its value, so the changed dot compares like with like
+		if ( 'typography' === ( $args['type'] ?? '' ) && isset( $args['default'] ) ) {
+			$args['default'] = self::typography_default( $args['default'] );
+		}
 
-		if ( isset( $args['style'] ) ) {
-			$args['style'] = self::style_rules( $args['style'] );
+		if ( isset( $args['output'] ) ) {
+			$args['output'] = self::output_rules( $args['output'] );
 
-			if ( $args['style'] ) {
-				self::$styled[ $args['settings'] ] = $args;
+			if ( $args['output'] ) {
+				self::$outputs[ $args['settings'] ] = $args;
 			}
 		}
 
-		if ( !$args['responsive'] ) {
-			self::queue_field( $args );
-
-			return;
-		}
-
-		// A field per device: tablet and mobile follow the wider device until they get a value
-		$default = $args['default'] ?? '';
-		$default = is_array( $default ) && array_intersect_key( $default, array_flip( self::DEVICES ) ) ? $default : [ 'desktop' => $default ];
-
-		foreach ( self::DEVICES as $device ) {
-			$field = array_merge( $args, [ 'default' => $default[ $device ] ?? '' ] );
-
-			if ( 'desktop' !== $device ) {
-				$field['settings'] = $args['settings'] . '_' . $device;
-			}
-
-			self::$devices[ $field['settings'] ] = [
-				'field'  => $args['settings'],
-				'device' => $device
-			];
-
-			self::queue_field( $field );
-		}
+		self::queue_field( $args );
 	}
 
 	/**
@@ -677,28 +846,6 @@ class Customizer extends BaseModule {
 		if ( isset( $args['choices'] ) && is_array( $args['choices'] ) ) {
 			self::$registered_choices[ $args['settings'] ] = $args['choices'];
 		}
-	}
-
-	/**
-	 * Values of a responsive field per device; an empty device follows the wider one
-	 *
-	 * @param string $name Field settings
-	 *
-	 * @return array [ device => value ] (DEVICES)
-	 */
-	public static function get_responsive_option( $name ) {
-		$values = [];
-		$wider  = '';
-
-		foreach ( self::DEVICES as $device ) {
-			$value = self::get_option( 'desktop' === $device ? $name : $name . '_' . $device, '' );
-			$value = ( null === $value || '' === $value ) ? $wider : $value;
-
-			$values[ $device ] = $value;
-			$wider             = $value;
-		}
-
-		return $values;
 	}
 
 	/**
@@ -994,7 +1141,7 @@ class Customizer extends BaseModule {
 				return new \WP_Customize_Upload_Control( $wp_customize, $id, $control_args );
 
 			case 'typography':
-				return new TypographyControl( $wp_customize, $id, $control_args );
+				return new TypographyControl( $wp_customize, $id, $control_args + [ 'properties' => self::typography_properties( $args ), 'family' => false !== ( $args['family'] ?? true ), 'icon' => sanitize_html_class( $args['icon'] ?? '' ) ] );
 
 			case 'dimension':
 				return new ValueControl(
@@ -1138,7 +1285,7 @@ class Customizer extends BaseModule {
 	}
 
 	/**
-	 * Sanitize a typography value ({"family":..,"variants":[..]} JSON string)
+	 * Sanitize a typography value ({"family":..,"variants":[..],"font-size":..} JSON string)
 	 */
 	public function sanitize_typography( $value ) {
 		$decoded = json_decode( (string) $value, true );
@@ -1152,7 +1299,17 @@ class Customizer extends BaseModule {
 			? array_map( 'sanitize_text_field', $decoded['variants'] )
 			: [];
 
-		return wp_json_encode( [ 'family' => $family, 'variants' => $variants ] );
+		$clean = [ 'family' => $family, 'variants' => $variants ];
+
+		foreach ( self::TYPOGRAPHY as $property ) {
+			$part = self::typography_value( $property, $decoded[ $property ] ?? '' );
+
+			if ( '' !== $part ) {
+				$clean[ $property ] = $part;
+			}
+		}
+
+		return wp_json_encode( $clean );
 	}
 
 	/**
@@ -1220,8 +1377,8 @@ class Customizer extends BaseModule {
 	}
 
 	/**
-	 * Transport of a field: 'auto' (the default) is postMessage for a field with style rules
-	 * (customizer-preview.js rewrites its CSS), refresh otherwise and for a font, which loads with the page
+	 * Transport of a field: 'auto' (the default) is postMessage for a field with output rules
+	 * (customizer-preview.js rewrites its CSS and loads a Google font picked), refresh otherwise
 	 */
 	private function get_transport( $args ) {
 		$transport = $args['transport'] ?? 'auto';
@@ -1230,7 +1387,7 @@ class Customizer extends BaseModule {
 			return $transport;
 		}
 
-		return !empty( $args['style'] ) && 'typography' !== ( $args['type'] ?? '' ) ? 'postMessage' : 'refresh';
+		return !empty( $args['output'] ) ? 'postMessage' : 'refresh';
 	}
 
 	/**
