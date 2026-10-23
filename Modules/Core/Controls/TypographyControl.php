@@ -107,7 +107,6 @@ class TypographyControl extends \WP_Customize_Control {
 							<label class="vlt-typography-control__field vlt-typography-control__family">
 								<span class="vlt-typography-control__label"><?php esc_html_e( 'Font', '@@textdomain' ); ?></span>
 								<select class="vlt-typography-control__family-select">
-									<option value="" data-source="google"><?php esc_html_e( 'Default', '@@textdomain' ); ?></option>
 									<?php foreach ( $groups as $group ) : ?>
 										<?php if ( !empty( $group['fonts'] ) ) : ?>
 											<optgroup label="<?php echo esc_attr( $group['label'] ); ?>">
@@ -127,7 +126,6 @@ class TypographyControl extends \WP_Customize_Control {
 							<label class="vlt-typography-control__field vlt-typography-control__weight">
 								<span class="vlt-typography-control__label"><?php esc_html_e( 'Weight', '@@textdomain' ); ?></span>
 								<select data-property="font-weight">
-									<option value=""><?php esc_html_e( 'Default', '@@textdomain' ); ?></option>
 									<?php foreach ( Customizer::TYPOGRAPHY_CHOICES['font-weight'] as $choice => $choice_label ) : ?>
 										<option value="<?php echo esc_attr( $choice ); ?>" <?php selected( (string) ( $value['font-weight'] ?? '' ), (string) $choice ); ?>><?php echo esc_html( $choice_label ); ?></option>
 									<?php endforeach; ?>

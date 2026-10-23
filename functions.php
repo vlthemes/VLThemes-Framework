@@ -15,25 +15,23 @@ if ( !defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Get theme mod value with ACF override support
+ * Get theme mod value with page overrides
  *
- * Universal theme option getter with ACF integration.
- * Order: ACF (post/options page) → Customizer/theme_mod → stored field default → null
- * Archives/search/404 pages always return global values.
+ * Order: the page's override (Page Settings box, fields with 'override' => true) → Customizer/theme_mod → stored
+ * field default → null.
  *
  * Wrapper for Customizer::get_theme_mod() static method
  *
- * @param string      $key      Setting key
- * @param bool        $use_acf  Try ACF first? (default: true)
- * @param int|null    $post_id  Post ID for ACF (default: current post)
- * @param string|null $acf_name ACF field name if different from $key
+ * @param string   $key           Setting key
+ * @param bool     $use_overrides Take the page's override? (default: true)
+ * @param int|null $post_id       The post whose override counts (default: the page shown)
  *
  * @return mixed Theme mod value or null if not found
  */
 if ( !function_exists( 'vlt_fw_get_theme_mod' ) ) {
-	function vlt_fw_get_theme_mod( $key, $use_acf = true, $post_id = null, $acf_name = null ) {
+	function vlt_fw_get_theme_mod( $key, $use_overrides = true, $post_id = null ) {
 		if ( class_exists( 'VLT\Framework\Modules\Core\Customizer' ) ) {
-			return VLT\Framework\Modules\Core\Customizer::get_theme_mod( $key, $use_acf, $post_id, $acf_name );
+			return VLT\Framework\Modules\Core\Customizer::get_theme_mod( $key, $use_overrides, $post_id );
 		}
 
 		return get_theme_mod( $key, null );
@@ -155,28 +153,6 @@ if ( !function_exists( 'vlt_fw_get_hsl_variables' ) ) {
 if ( !function_exists( 'vlt_fw_get_attachment_image' ) ) {
 	function vlt_fw_get_attachment_image( $image_id, $args = [] ) {
 		return VLT\Framework\Modules\Utils\Image::get_attachment_image( $image_id, $args );
-	}
-}
-
-/**
- * Resolve a Customizer image setting (stored as a URL) back to its
- * attachment ID, for use with vlt_fw_get_attachment_image() and similar
- * ID-based helpers.
- *
- * Wrapper for Customizer::get_attachment_id_by_option() static method
- *
- * @param string $key     Setting key
- * @param mixed  $default Default value if not found
- *
- * @return int|mixed Attachment ID, or $default if not found/resolvable
- */
-if ( !function_exists( 'vlt_fw_get_attachment_id_by_theme_mod' ) ) {
-	function vlt_fw_get_attachment_id_by_theme_mod( $key, $default = null ) {
-		if ( class_exists( 'VLT\Framework\Modules\Core\Customizer' ) ) {
-			return VLT\Framework\Modules\Core\Customizer::get_attachment_id_by_option( $key, $default );
-		}
-
-		return $default;
 	}
 }
 

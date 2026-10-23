@@ -1,0 +1,597 @@
+/* ========================================
+ * Page Settings box (Modules/Core/Overrides.php, assets/js/overrides.js), as the editor's block settings: each
+ * Customizer section a panel (PanelBody) opening on its title, its fields one bordered group (ItemGroup). A field
+ * inheriting is a row (its name and the Customizer value); overridden, its control. The admin color and the
+ * editor's grays (@wordpress/base-styles).
+ * ======================================== */
+.vlt-overrides {
+	--vlt-theme: var(--wp-admin-theme-color, #3858e9);
+	--vlt-theme-dark: var(--wp-admin-theme-color-darker-20, #183ad6);
+	--vlt-focus: var(--wp-admin-border-width-focus, 2px);
+	--vlt-gray-900: #1e1e1e;
+	--vlt-gray-700: #757575;
+	--vlt-gray-600: #949494;
+	--vlt-gray-200: #e0e0e0;
+	--vlt-gray-100: #f0f0f0;
+	--vlt-white: #ffffff;
+	--vlt-line: rgba(0, 0, 0, .1);
+	--vlt-radius: 2px;
+
+	min-width: 0;
+	font-size: 13px;
+	color: var(--vlt-gray-900);
+}
+
+/* The box's header as the editor's panel title (PanelBody, e.g. "Advanced"): a 48px row, the title at 16px, one
+ * chevron (down closed, up open); a click on the row opens or closes it (postbox.js). The move
+ * up / down buttons are left out: the editor's panels have none. */
+#poststuff #vlt-overrides .postbox-header {
+	position: relative;
+	min-height: 48px;
+	border-top: 1px solid #e0e0e0;
+	border-bottom: 0;
+	transition: background-color .1s ease-in-out;
+}
+
+.edit-post-meta-boxes-area #poststuff #vlt-overrides .postbox-header h2.hndle,
+#poststuff #vlt-overrides .postbox-header h2.hndle {
+	padding: 0 16px;
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1.4;
+	color: #1e1e1e;
+	cursor: pointer;
+}
+
+/* The overrides of the page: the panels' badge where theirs is, 8px before the chevron (outside .vlt-overrides,
+ * so its colors in full) */
+.edit-post-meta-boxes-area #poststuff #vlt-overrides .postbox-header h2.hndle,
+#poststuff #vlt-overrides .postbox-header h2.hndle {
+	display: flex;
+	align-items: center;
+	padding-right: 0;
+}
+
+#poststuff #vlt-overrides .vlt-overrides__total {
+	box-sizing: border-box;
+	flex: none;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 5px;
+	margin-right: -8px;
+	margin-left: auto;
+	font-size: 11px;
+	font-weight: 500;
+	line-height: 18px;
+	color: #ffffff;
+	text-align: center;
+	background: var(--wp-admin-theme-color, #3858e9);
+	border-radius: 9px;
+}
+
+#poststuff #vlt-overrides .vlt-overrides__total:empty {
+	display: none;
+}
+
+/* ACF grays the meta box headers on hover in the editor (#editor .postbox > .postbox-header:hover) */
+#poststuff #vlt-overrides > .postbox-header:hover {
+	background: transparent;
+}
+
+#poststuff #vlt-overrides .handle-order-higher,
+#poststuff #vlt-overrides .handle-order-lower {
+	display: none;
+}
+
+/* 52px: its chevron 16px from the side, as the panels' */
+#poststuff #vlt-overrides .handlediv {
+	width: 52px;
+	height: 48px;
+	color: #1e1e1e;
+}
+
+#poststuff #vlt-overrides .handlediv .toggle-indicator,
+#poststuff #vlt-overrides .handlediv .toggle-indicator::before {
+	color: #1e1e1e;
+}
+
+#poststuff #vlt-overrides .handlediv .toggle-indicator::before {
+	content: "\f343";
+	content: "\f343" / '';
+	font-size: 20px;
+}
+
+#poststuff #vlt-overrides.closed .handlediv .toggle-indicator::before {
+	content: "\f347";
+	content: "\f347" / '';
+}
+
+/* Keyboard focus: the row's ring and its title in the admin color, as the editor's */
+#poststuff #vlt-overrides .handlediv:focus {
+	box-shadow: none;
+}
+
+#poststuff #vlt-overrides .postbox-header:has(.handlediv:focus-visible) {
+	box-shadow: inset 0 0 0 var(--wp-admin-border-width-focus, 2px) var(--wp-admin-theme-color, #3858e9);
+}
+
+#poststuff #vlt-overrides .postbox-header:has(.handlediv:focus-visible) h2.hndle {
+	color: var(--wp-admin-theme-color, #3858e9);
+}
+
+.edit-post-meta-boxes-area #poststuff #vlt-overrides > .inside,
+#poststuff #vlt-overrides > .inside {
+	padding: 0;
+	margin: 0;
+}
+
+/* Nothing wider than the sidebar (the color picker keeps its own sizing: its width is set from the box) */
+.vlt-overrides,
+.vlt-overrides [class*="vlt-overrides__"] {
+	box-sizing: border-box;
+}
+
+.vlt-overrides select,
+.vlt-overrides input,
+.vlt-overrides textarea,
+.vlt-overrides img,
+.vlt-overrides .wp-picker-container {
+	max-width: 100%;
+}
+
+.vlt-overrides [hidden] {
+	display: none !important;
+}
+
+/* Weights: titles and names 500, the field being set 600, values and help 400 */
+
+/* Panel: a Customizer section (PanelBody) */
+.vlt-overrides__panel {
+	border-top: 1px solid var(--vlt-gray-200);
+}
+
+.vlt-overrides .vlt-overrides__panel-title {
+	margin: 0;
+	padding: 0;
+	font-size: inherit;
+	line-height: inherit;
+}
+
+.vlt-overrides__panel-toggle {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	width: 100%;
+	min-height: 48px;
+	padding: 16px;
+	margin: 0;
+	font-family: inherit;
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1.4;
+	color: var(--vlt-gray-900);
+	text-align: left;
+	cursor: pointer;
+	background: none;
+	border: 0;
+	transition: background-color .1s ease-in-out;
+}
+
+.vlt-overrides__panel-toggle:focus-visible {
+	color: var(--vlt-theme);
+	outline: none;
+	box-shadow: inset 0 0 0 var(--vlt-focus) var(--vlt-theme);
+}
+
+.vlt-overrides__panel-name {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+/* Its overrides */
+.vlt-overrides__panel-count {
+	flex: none;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 5px;
+	font-size: 11px;
+	font-weight: 500;
+	line-height: 18px;
+	color: var(--vlt-white);
+	text-align: center;
+	background: var(--vlt-theme);
+	border-radius: 9px;
+}
+
+.vlt-overrides__panel-count:empty {
+	display: none;
+}
+
+.vlt-overrides__panel-arrow.dashicons {
+	flex: none;
+	width: 20px;
+	height: 20px;
+	font-size: 20px;
+	transition: transform .15s ease-in-out;
+}
+
+.vlt-overrides__panel.is-opened .vlt-overrides__panel-arrow {
+	transform: rotate(180deg);
+}
+
+.vlt-overrides__panel-body {
+	padding: 0 16px 16px;
+}
+
+/* The fields: one bordered group (ItemGroup), a line between them */
+.vlt-overrides__group {
+	overflow: hidden;
+	border: 1px solid var(--vlt-line);
+	border-radius: var(--vlt-radius);
+}
+
+.vlt-overrides__field {
+	margin-bottom: -1px;
+	border-bottom: 1px solid var(--vlt-line);
+}
+
+/* Inheriting: a row (an Item): the name, the value on the right */
+.vlt-overrides__summary {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	width: 100%;
+	min-height: 40px;
+	padding: 8px 12px;
+	margin: 0;
+	font-family: inherit;
+	font-size: 13px;
+	line-height: 20px;
+	color: var(--vlt-gray-900);
+	text-align: left;
+	cursor: pointer;
+	background: none;
+	border: 0;
+	transition: background-color .1s ease-in-out;
+}
+
+.vlt-overrides__summary:hover {
+	background: var(--vlt-gray-100);
+}
+
+.vlt-overrides__summary:focus-visible {
+	outline: none;
+	box-shadow: inset 0 0 0 var(--vlt-focus) var(--vlt-theme);
+}
+
+.vlt-overrides__name {
+	flex: 1 1 auto;
+	min-width: 0;
+	font-weight: 500;
+	overflow-wrap: break-word;
+}
+
+/* The value keeps its width (the name wraps), a long one up to 50% with an ellipsis */
+.vlt-overrides__value {
+	display: inline-flex;
+	flex: 0 0 auto;
+	gap: 6px;
+	align-items: center;
+	min-width: 0;
+	max-width: 50%;
+	overflow: hidden;
+	font-size: 13px;
+	font-weight: 400;
+	color: var(--vlt-gray-700);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.vlt-overrides__edit.dashicons {
+	display: none;
+}
+
+/* Overridden: its control, the bar on its side marks this page's own value */
+.vlt-overrides__editor {
+	padding: 12px;
+	box-shadow: inset 2px 0 0 var(--vlt-theme);
+}
+
+.vlt-overrides__field:not(.is-overridden) .vlt-overrides__editor,
+.vlt-overrides__field.is-overridden .vlt-overrides__summary {
+	display: none;
+}
+
+.vlt-overrides__head {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 8px;
+}
+
+/* Control label */
+.vlt-overrides__label {
+	display: inline-flex;
+	gap: 6px;
+	align-items: center;
+	min-width: 0;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.4;
+}
+
+/* The dot after the name, as in the Customizer: the value on this page is not the default */
+.vlt-overrides__field.is-changed .vlt-overrides__name::after,
+.vlt-overrides__field.is-changed .vlt-overrides__label::after {
+	display: inline-block;
+	flex: none;
+	width: 6px;
+	height: 6px;
+	margin-left: 6px;
+	vertical-align: 1px;
+	content: "";
+	background: var(--vlt-theme);
+	border-radius: 50%;
+}
+
+/* The label is a flex row: its gap already spaces the dot */
+.vlt-overrides__field.is-changed .vlt-overrides__label::after {
+	margin-left: 0;
+}
+
+/* Revert: the Customizer's reset button (customizer-controls.css .vlt-reset-control), shown on hover */
+.vlt-overrides__revert.dashicons {
+	display: flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	margin-left: auto;
+	color: var(--vlt-gray-700);
+	cursor: pointer;
+	background: none;
+	border: 0;
+	border-radius: var(--vlt-radius);
+	opacity: 0;
+	transition: opacity .1s ease-in-out, color .1s ease-in-out;
+}
+
+.vlt-overrides__revert.dashicons::before {
+	font-size: 16px;
+	line-height: 1;
+}
+
+.vlt-overrides__editor:hover .vlt-overrides__revert,
+.vlt-overrides__editor:focus-within .vlt-overrides__revert {
+	opacity: 1;
+}
+
+.vlt-overrides__revert:hover {
+	color: var(--vlt-theme);
+}
+
+.vlt-overrides__revert:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 var(--vlt-focus) var(--vlt-theme);
+}
+
+/* Inputs: the editor's (InputControl) */
+.vlt-overrides__control select,
+.vlt-overrides__control input[type="text"],
+.vlt-overrides__control input[type="url"],
+.vlt-overrides__control input[type="email"],
+.vlt-overrides__control input[type="number"],
+.vlt-overrides__control textarea {
+	width: 100%;
+	min-height: 32px;
+	margin: 0;
+	font-size: 13px;
+	color: var(--vlt-gray-900);
+	border: 1px solid var(--vlt-gray-600);
+	border-radius: var(--vlt-radius);
+	box-shadow: none;
+}
+
+/* A textarea is inline: no line gap under it */
+.vlt-overrides__control textarea {
+	display: block;
+}
+
+.vlt-overrides__control select:hover,
+.vlt-overrides__control input:hover,
+.vlt-overrides__control textarea:hover {
+	color: var(--vlt-gray-900);
+	border-color: var(--vlt-gray-900);
+}
+
+.vlt-overrides__control select:focus,
+.vlt-overrides__control input:focus,
+.vlt-overrides__control textarea:focus {
+	border-color: var(--vlt-theme);
+	outline: none;
+	box-shadow: 0 0 0 .5px var(--vlt-theme);
+}
+
+.vlt-overrides__number {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.vlt-overrides__number input[type="number"] {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.vlt-overrides__unit {
+	flex: none;
+	font-size: 12px;
+	color: var(--vlt-gray-700);
+}
+
+.vlt-overrides__radio,
+.vlt-overrides__checkbox {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	margin: 0 0 8px;
+}
+
+.vlt-overrides__radio:last-child,
+.vlt-overrides__checkbox:last-child {
+	margin-bottom: 0;
+}
+
+/* Color: the picker fits the sidebar (its width is set from it) */
+.vlt-overrides .wp-picker-container {
+	display: block;
+}
+
+.vlt-overrides .wp-picker-container .wp-color-result.button {
+	min-height: 32px;
+	margin: 0;
+}
+
+.vlt-overrides .wp-picker-input-wrap:not(.hidden) {
+	display: inline-flex;
+	gap: 6px;
+	align-items: center;
+	max-width: 100%;
+	margin-top: 6px;
+}
+
+.vlt-overrides .wp-picker-input-wrap label {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.vlt-overrides .wp-picker-container input[type="text"].wp-color-picker {
+	width: 100%;
+	min-width: 0;
+}
+
+.vlt-overrides .wp-picker-holder {
+	max-width: 100%;
+}
+
+/* The space above the picker only while it is open: closed, nothing hangs under the field */
+.vlt-overrides .wp-picker-holder .iris-picker {
+	margin-top: 6px;
+}
+
+/* Image */
+.vlt-overrides__image {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+}
+
+.vlt-overrides__image-preview {
+	flex: 1 0 100%;
+}
+
+.vlt-overrides__image-preview:empty {
+	display: none;
+}
+
+.vlt-overrides__image-preview img {
+	display: block;
+	max-height: 80px;
+	padding: 8px;
+	background: var(--vlt-gray-100);
+	border-radius: var(--vlt-radius);
+}
+
+.vlt-overrides__image-remove.button-link {
+	color: #cc1818;
+}
+
+.vlt-overrides__image-remove.button-link:hover {
+	color: #710d0d;
+}
+
+/* The Customizer value under the control (a div: the meta box's paragraph margins do not reach it) */
+.vlt-overrides .vlt-overrides__inherit {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	align-items: center;
+	margin: 12px 0 0;
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 1.4;
+	color: var(--vlt-gray-700);
+}
+
+.vlt-overrides__inherit > span {
+	display: inline-flex;
+	font-weight: 500;
+	color: var(--vlt-gray-900);
+	gap: 4px;
+	align-items: center;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.vlt-overrides__swatch {
+	display: inline-block;
+	flex: none;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
+}
+
+.vlt-overrides__thumb {
+	display: block;
+	max-width: 48px;
+	max-height: 20px;
+	border-radius: var(--vlt-radius);
+}
+
+/* Footer: the count and Reset all */
+.vlt-overrides__footer {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 16px;
+	border-top: 1px solid var(--vlt-gray-200);
+}
+
+.vlt-overrides__footer:has(.vlt-overrides__count:empty) {
+	display: none;
+}
+
+.vlt-overrides__count {
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--vlt-gray-900);
+}
+
+.vlt-overrides__reset.button-link {
+	margin-left: auto;
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--vlt-theme);
+	text-decoration: none;
+}
+
+.vlt-overrides__reset.button-link:hover {
+	color: var(--vlt-theme-dark);
+	text-decoration: underline;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#poststuff #vlt-overrides .postbox-header,
+	.vlt-overrides__panel-toggle,
+	.vlt-overrides__panel-arrow.dashicons,
+	.vlt-overrides__summary,
+	.vlt-overrides__revert.dashicons {
+		transition: none;
+	}
+}

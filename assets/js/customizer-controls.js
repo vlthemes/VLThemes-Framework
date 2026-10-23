@@ -926,10 +926,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	// The lengths as value fields; a line height without a unit is unitless
 	var TYPOGRAPHY_LENGTHS = {
-		'font-size': { units: ['px', 'rem', 'em', 'vw', '%'], functions: FUNCTIONS, keywords: [], unitSteps: { rem: 0.05, em: 0.05, vw: 0.1 } },
-		'line-height': { units: ['%', '', 'px', 'em', 'rem'], functions: ['calc', 'var'], keywords: ['normal'], unitSteps: { '': 0.01, em: 0.01, rem: 0.05 } },
-		'letter-spacing': { units: ['em', 'px', 'rem'], functions: ['calc', 'var'], keywords: ['normal'], unitSteps: { em: 0.005, px: 0.1, rem: 0.005 } },
-		'word-spacing': { units: ['px', 'em', 'rem'], functions: ['calc', 'var'], keywords: ['normal'], unitSteps: { em: 0.01, rem: 0.01 } }
+		'font-size': { units: ['px', 'em', 'vw', '%'], functions: FUNCTIONS, keywords: [], unitSteps: { em: 0.05, vw: 0.1 } },
+		'line-height': { units: ['%', '', 'px', 'em'], functions: ['calc', 'var'], keywords: ['normal'], unitSteps: { '': 0.01, em: 0.01 } },
+		'letter-spacing': { units: ['em', 'px'], functions: ['calc', 'var'], keywords: ['normal'], unitSteps: { em: 0.005, px: 0.1 } },
+		'word-spacing': { units: ['px', 'em'], functions: ['calc', 'var'], keywords: ['normal'], unitSteps: { em: 0.01 } }
 	};
 
 	// A toggle off: the value that undoes it
@@ -962,6 +962,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		var data = parse(control.setting.get());
 		var sent;
+
+		// No empty font (there is no "Default" to pick): one saved without it shows the default's
+		if (familySelect && !data.family) {
+			data.family = parse(defaultValues[control.id]).family || '';
+		}
 
 		// Family, variants, then the properties set: the shape Customizer::typography_default() gives a default
 		var write = function () {

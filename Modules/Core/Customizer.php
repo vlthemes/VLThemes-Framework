@@ -25,7 +25,7 @@ if ( !defined( 'ABSPATH' ) ) {
  *         'section'  => 'section_header_general',
  *         'label'    => esc_html__( 'Logo Height', '@@textdomain' ),
  *         'default'  => '18px',
- *         'units'    => [ 'px', 'rem' ],
+ *         'units'    => [ 'px', 'vh' ],
  *         'output'   => [
  *             [ 'element' => '.vlt-navbar-logo img', 'property' => 'height' ],
  *             [ 'element' => '.vlt-navbar-logo img', 'property' => 'height', 'value_pattern' => 'calc($ * .8)', 'media_query' => '@media (max-width: 575px)' ],
@@ -36,11 +36,13 @@ if ( !defined( 'ABSPATH' ) ) {
  *   min() / max() / calc() / var() or a list of them, e.g. [ 'var' ], 'keywords' => [ 'auto' ]).
  * - number: a number (min, max, step or input_attrs; 'unit' => 'px' shown next to it and added in the CSS,
  *   'units' => [ 'ms', 's' ] for a time kept in ms).
+ * - image: a URL, or with 'save_as' => 'id' the attachment ID (the media control; its CSS and the preview take its
+ *   full size URL).
  * - typography: a font, {"family":…,"variants":[…]} ('properties' => true for all of Customizer::TYPOGRAPHY
  *   too, or a list of them, e.g. [ 'font-size', 'font-weight' ]; a length without a unit is px, line height none;
  *   'family' => false for no font select, e.g. a field of sizes for phones; 'icon' => 'dashicons-tablet' before
  *   the label). Its default can be an array:
- *   [ 'family' => 'Mulish', 'font-size' => '1rem' ].
+ *   [ 'family' => 'Mulish', 'font-size' => '16px' ].
  * - output: the CSS of the field, rules of
  *   - element, property: the selector and the property (a custom property too: '--vlt-primary-font'); a typography
  *     field without a property prints all of its own (font-family, font-size, …);
@@ -53,6 +55,9 @@ if ( !defined( 'ABSPATH' ) ) {
  *   active_callback print none.
  *
  * A field whose value is not the default shows a dot by its label and, on hover, a reset button.
+ *
+ * 'override' => true: the field shows in the Page Settings box too (Overrides), where a page can set its own value.
+ * Its value on that page (get_option(), get_theme_mod() and its CSS) is then the page's.
  */
 class Customizer extends BaseModule {
 	protected $name    = 'customizer';
@@ -90,6 +95,13 @@ class Customizer extends BaseModule {
 		'fields'   => []
 	];
 	private static $default_options  = [];
+
+	/**
+	 * Fields a page can override [ settings => field ]
+	 *
+	 * @var array
+	 */
+	private static $overridable = [];
 	private static $registered_choices = [];
 
 	/**
@@ -118,6 +130,8 @@ class Customizer extends BaseModule {
 		add_action( 'enqueue_block_assets', [ $this, 'enqueue_editor_css' ] );
 
 		add_filter( 'vlt_fw_google_fonts', [ $this, 'collect_typography_google_fonts' ] );
+
+		( new Overrides( $this ) )->register();
 	}
 
 	/**
@@ -142,7 +156,7 @@ class Customizer extends BaseModule {
 				continue;
 			}
 
-			$value = json_decode( (string) self::get_option( $field['settings'] ), true );
+			$value = json_decode( self::typography_saved( $field ), true );
 
 			if ( empty( $value['family'] ) ) {
 				continue;
@@ -256,13 +270,14 @@ class Customizer extends BaseModule {
 					'keywords' => self::dimension_keywords( $field ),
 					'output'   => $rules,
 					'rules'    => is_array( $field['active_callback'] ?? null ) ? array_values( $field['active_callback'] ) : [],
+					'family'   => 'typography' === ( $field['type'] ?? '' ) ? self::typography_family( $field ) : '',
 				];
 			}
 		}
 
 		wp_add_inline_script(
 			'vlt-customizer-preview',
-			'window.vltFwCustomizerCss = ' . wp_json_encode( [ 'fields' => $fields ] ) . ';',
+			'window.vltFwCustomizerCss = ' . wp_json_encode( [ 'fields' => $fields, 'media' => esc_url_raw( rest_url( 'wp/v2/media/' ) ) ] ) . ';',
 			'before'
 		);
 	}
@@ -423,8 +438,11 @@ class Customizer extends BaseModule {
 	public function output_dynamic_css() {
 		// The preview gets a style tag per field: customizer-preview.js rewrites it as the field changes
 		if ( is_customize_preview() ) {
+			// A field this page overrides keeps the page's CSS: the Customizer's value does not show here
 			foreach ( self::$outputs as $id => $field ) {
-				echo '<style id="' . esc_attr( 'vlt-customizer-css-' . $id ) . '">' . wp_strip_all_tags( self::get_field_css( $field ) ) . '</style>' . "\n";
+				$override = Overrides::has( $id ) ? ' data-vlt-override' : '';
+
+				echo '<style id="' . esc_attr( 'vlt-customizer-css-' . $id ) . '"' . $override . '>' . wp_strip_all_tags( self::get_field_css( $field ) ) . '</style>' . "\n";
 			}
 
 			$css = '';
@@ -486,7 +504,7 @@ class Customizer extends BaseModule {
 			return [];
 		}
 
-		$saved  = self::get_option( $field['settings'] );
+		$saved  = 'typography' === ( $field['type'] ?? '' ) ? self::typography_saved( $field ) : self::get_option( $field['settings'] );
 		$blocks = [];
 
 		foreach ( $field['output'] as $rule ) {
@@ -641,6 +659,37 @@ class Customizer extends BaseModule {
 		}
 
 		return self::dimension_value( [ 'units' => [ 'px', 'em', 'rem', '%', 'vw', 'vh' ], 'functions' => true, 'keywords' => [ 'normal' ] ], $value );
+	}
+
+	/**
+	 * The font of a typography field's default ('' for none)
+	 */
+	private static function typography_family( $field ) {
+		$default = json_decode( (string) ( $field['default'] ?? '' ), true );
+
+		return is_array( $default ) ? (string) ( $default['family'] ?? '' ) : '';
+	}
+
+	/**
+	 * A typography field's value (JSON) with no empty font: one saved without a font (there is no "Default" to
+	 * pick) takes the font of the field's default
+	 *
+	 * @param array $field Queued field
+	 *
+	 * @return string
+	 */
+	private static function typography_saved( $field ) {
+		$saved  = self::get_option( $field['settings'] );
+		$data   = is_array( $saved ) ? $saved : json_decode( (string) $saved, true );
+		$family = self::typography_family( $field );
+
+		if ( !is_array( $data ) || !empty( $data['family'] ) || '' === $family ) {
+			return is_array( $saved ) ? wp_json_encode( $saved ) : (string) $saved;
+		}
+
+		$data['family'] = $family;
+
+		return wp_json_encode( $data );
 	}
 
 	/**
@@ -839,6 +888,10 @@ class Customizer extends BaseModule {
 	private static function queue_field( $args ) {
 		self::$queue['fields'][] = $args;
 
+		if ( !empty( $args['override'] ) && in_array( $args['type'] ?? 'text', Overrides::TYPES, true ) ) {
+			self::$overridable[ $args['settings'] ] = $args;
+		}
+
 		if ( isset( $args['default'] ) ) {
 			self::$default_options[ $args['settings'] ] = $args['default'];
 		}
@@ -852,6 +905,21 @@ class Customizer extends BaseModule {
 	 * Get option from theme_mod or fallback default
 	 */
 	public static function get_option( $name, $default = null ) {
+		if ( null === $name ) {
+			return $default;
+		}
+
+		// The page's own value of an overridable field
+		$found = false;
+		$value = Overrides::value( $name, $found );
+
+		return $found ? $value : self::get_saved( $name, $default );
+	}
+
+	/**
+	 * Get option from theme_mod or fallback default, no page override
+	 */
+	public static function get_saved( $name, $default = null ) {
 		if ( null === $name ) {
 			return $default;
 		}
@@ -870,65 +938,48 @@ class Customizer extends BaseModule {
 	}
 
 	/**
-	 * Get an image option's attachment ID.
+	 * Theme option: the page's override (Page Settings) of an overridable field, else the Customizer value
 	 *
-	 * Native WP_Customize_Image_Control stores a URL
+	 * @param string   $key           Setting
+	 * @param bool     $use_overrides False for the Customizer value even where a page overrides it
+	 * @param int|null $post_id       The post whose override counts (default: the page shown)
+	 *
+	 * @return mixed
 	 */
-	public static function get_attachment_id_by_option( $name, $default = null ) {
-		$value = self::get_option( $name, null );
-
-		if ( empty( $value ) ) {
-			return $default;
-		}
-
-		// Legacy Kirki-stored value (attachment ID saved directly).
-		if ( is_numeric( $value ) ) {
-			return (int) $value;
-		}
-
-		$id = attachment_url_to_postid( $value );
-
-		return $id ?: $default;
-	}
-
-	/**
-	 * Universal theme option getter with ACF override support
-	 */
-	public static function get_theme_mod( $key, $use_acf = true, $post_id = null, $acf_name = null ) {
+	public static function get_theme_mod( $key, $use_overrides = true, $post_id = null ) {
 		if ( empty( $key ) ) {
 			return null;
 		}
 
-		$value = null;
+		$found = false;
+		$value = $use_overrides ? Overrides::value( $key, $found, $post_id ) : null;
 
-		if ( $use_acf && function_exists( 'get_field' ) ) {
-			if ( !is_archive() && !is_search() && !is_404() ) {
-				$field_name = $acf_name ?: $key;
-				$post_id    = $post_id ?: get_the_ID();
-
-				if ( $post_id ) {
-					$acf_value = get_field( $field_name, $post_id );
-
-					if ( false !== $acf_value && null !== $acf_value && '' !== $acf_value ) {
-						$value = $acf_value;
-					}
-				}
-
-				if ( null === $value ) {
-					$acf_options_value = get_field( $field_name, 'option' );
-
-					if ( false !== $acf_options_value && null !== $acf_options_value && '' !== $acf_options_value ) {
-						$value = $acf_options_value;
-					}
-				}
-			}
+		if ( !$found ) {
+			$value = self::get_saved( $key );
 		}
 
-		if ( empty( $value ) ) {
-			$value = self::get_option( $key );
-		}
+		return apply_filters( 'vlt_framework/customizer/get_theme_mod', $value, $key, $use_overrides, $post_id );
+	}
 
-		return apply_filters( 'vlt_framework/customizer/get_theme_mod', $value, $key, $use_acf, $post_id, $acf_name );
+	/**
+	 * Fields a page can override, in their order [ settings => field ]
+	 */
+	public static function get_overridable_fields() {
+		return self::$overridable;
+	}
+
+	/**
+	 * A queued section's args ([] for none)
+	 */
+	public static function get_section( $id ) {
+		return self::$queue['sections'][ $id ] ?? [];
+	}
+
+	/**
+	 * The sanitize callback of a field: its own, else the one of its type
+	 */
+	public function get_sanitize_callback( $args ) {
+		return $args['sanitize_callback'] ?? $this->guess_sanitize_callback( $args );
 	}
 
 	/**
@@ -1135,6 +1186,11 @@ class Customizer extends BaseModule {
 				return new \WP_Customize_Color_Control( $wp_customize, $id, $control_args );
 
 			case 'image':
+				// 'save_as' => 'id': the attachment ID, else the URL
+				if ( 'id' === ( $args['save_as'] ?? '' ) ) {
+					return new \WP_Customize_Media_Control( $wp_customize, $id, $control_args + [ 'mime_type' => 'image' ] );
+				}
+
 				return new \WP_Customize_Image_Control( $wp_customize, $id, $control_args );
 
 			case 'upload':
@@ -1212,6 +1268,12 @@ class Customizer extends BaseModule {
 				return 'sanitize_hex_color';
 
 			case 'image':
+				if ( 'id' === ( $args['save_as'] ?? '' ) ) {
+					return fn( $value ) => absint( $value ) ?: '';
+				}
+
+				return 'esc_url_raw';
+
 			case 'upload':
 			case 'url':
 				return 'esc_url_raw';

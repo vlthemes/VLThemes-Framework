@@ -7,6 +7,45 @@
 
 	var data = window.vltFwCustomizerCss || { fields: {} };
 
+	// URLs of attachment IDs (an image field with 'save_as' => 'id'): id => url, or false while it is asked for
+	var media = {};
+
+	function mediaUrl(id) {
+		if (undefined !== media[id]) {
+			return media[id] || '';
+		}
+
+		media[id] = false;
+
+		if (!data.media || !window.fetch) {
+			return '';
+		}
+
+		window.fetch(data.media + id + '?_fields=source_url', { credentials: 'same-origin' })
+			.then(function (response) {
+				return response.ok ? response.json() : null;
+			})
+			.then(function (attachment) {
+				if (!attachment || !attachment.source_url) {
+					return;
+				}
+
+				media[id] = attachment.source_url;
+
+				// Now known: the fields showing it again
+				Object.keys(data.fields).forEach(function (fieldId) {
+					var field = data.fields[fieldId];
+
+					if (('image' === field.type || 'upload' === field.type) && String(settingValue(fieldId)) === String(id)) {
+						render(fieldId, field);
+					}
+				});
+			})
+			.catch(function () {});
+
+		return '';
+	}
+
 	function settingValue(id) {
 		var setting = api(id);
 
@@ -91,7 +130,9 @@
 
 			case 'image':
 			case 'upload':
-				return /^\d+$/.test(value) ? '' : 'url("' + encodeURI(value).replace(/"/g, '%22') + '")';
+				var url = /^\d+$/.test(value) ? mediaUrl(value) : value;
+
+				return url ? 'url("' + encodeURI(url).replace(/"/g, '%22') + '")' : '';
 
 			default:
 				return stripCss(value);
@@ -202,6 +243,18 @@
 		var saved = settingValue(id);
 		var blocks = {};
 
+		// A typography value saved without a font takes the font of the field's default (Customizer::typography_saved())
+		if ('typography' === field.type && field.family) {
+			try {
+				var font = JSON.parse(saved || '{}');
+
+				if (font && 'object' === typeof font && !font.family) {
+					font.family = field.family;
+					saved = JSON.stringify(font);
+				}
+			} catch (error) {}
+		}
+
 		field.output.forEach(function (rule) {
 			// No property: all the typography of the field
 			if (!rule.property) {
@@ -237,6 +290,11 @@
 
 	function render(id, field) {
 		var style = document.getElementById('vlt-customizer-css-' + id);
+
+		// A field this page overrides (Page Settings) keeps the page's CSS
+		if (style && style.hasAttribute('data-vlt-override')) {
+			return;
+		}
 
 		if (!style) {
 			style = document.createElement('style');
