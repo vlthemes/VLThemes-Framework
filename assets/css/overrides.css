@@ -291,15 +291,18 @@
 	display: none;
 }
 
-/* Overridden: its control, the bar on its side marks this page's own value */
+/* A field: its label, Reset and control; overridden, the bar on its side marks this page's own value */
 .vlt-overrides__editor {
 	padding: 12px;
+}
+
+.vlt-overrides__field.is-overridden .vlt-overrides__editor {
 	box-shadow: inset 2px 0 0 var(--vlt-theme);
 }
 
-.vlt-overrides__field:not(.is-overridden) .vlt-overrides__editor,
-.vlt-overrides__field.is-overridden .vlt-overrides__summary {
-	display: none;
+/* Reset only on a field overridden */
+.vlt-overrides__field:not(.is-overridden) .vlt-overrides__revert {
+	visibility: hidden;
 }
 
 .vlt-overrides__head {
@@ -321,9 +324,9 @@
 	line-height: 1.4;
 }
 
-/* The dot after the name, as in the Customizer: the value on this page is not the default */
-.vlt-overrides__field.is-changed .vlt-overrides__name::after,
-.vlt-overrides__field.is-changed .vlt-overrides__label::after {
+/* The dot after the name: the field is overridden (a value other than Inherit) */
+.vlt-overrides__field.is-overridden .vlt-overrides__name::after,
+.vlt-overrides__field.is-overridden .vlt-overrides__label::after {
 	display: inline-block;
 	flex: none;
 	width: 6px;
@@ -336,11 +339,11 @@
 }
 
 /* The label is a flex row: its gap already spaces the dot */
-.vlt-overrides__field.is-changed .vlt-overrides__label::after {
+.vlt-overrides__field.is-overridden .vlt-overrides__label::after {
 	margin-left: 0;
 }
 
-/* Revert: the Customizer's reset button (customizer-controls.css .vlt-reset-control), shown on hover */
+/* Reset: the Customizer's reset button (customizer-controls.css .vlt-reset-control), on a field overridden */
 .vlt-overrides__revert.dashicons {
 	display: flex;
 	flex: none;
@@ -364,8 +367,7 @@
 	line-height: 1;
 }
 
-.vlt-overrides__editor:hover .vlt-overrides__revert,
-.vlt-overrides__editor:focus-within .vlt-overrides__revert {
+.vlt-overrides__field.is-overridden .vlt-overrides__revert {
 	opacity: 1;
 }
 

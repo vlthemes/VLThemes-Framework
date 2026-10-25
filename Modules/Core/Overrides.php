@@ -207,63 +207,68 @@ class Overrides {
 	}
 
 	/**
-	 * One field. Inheriting: one line, its label and the Customizer value, a click overrides it. Overridden: its
-	 * label, Revert, its control and the Customizer value under it. The control is disabled while the field
-	 * inherits, so it is not sent. Its dot, as in the Customizer: the page's value is not the default.
+	 * One field: its label, Reset (back to Inherit, shown while overridden) and control, Inherit (the Customizer
+	 * value) by default; another value overrides it for the page. Inherit is the empty value: "Inherit (Customizer
+	 * value)" first in a select, a radio and a checkbox (a select: Inherit, On, Off), an empty field elsewhere with
+	 * the Customizer value under it.
 	 */
 	private function render_field( $id, $field, $inherited, $overrides ) {
 		$overridden = array_key_exists( $id, $overrides );
-		$value      = $overridden ? $overrides[ $id ] : $inherited;
+		$type       = $field['type'] ?? 'text';
 		$input_id   = 'vlt-override-' . $id;
 		$label      = wp_strip_all_tags( $field['label'] ?? $id );
-		$shown      = $this->display_value( $field, $inherited );
 		$rules      = is_array( $field['active_callback'] ?? null ) ? array_values( $field['active_callback'] ) : [];
-		$default    = Customizer::get_default_options()[ $id ] ?? '';
 		?>
-		<div class="vlt-overrides__field<?php echo $overridden ? ' is-overridden' : ''; ?>" data-setting="<?php echo esc_attr( $id ); ?>" data-type="<?php echo esc_attr( $field['type'] ?? 'text' ); ?>" data-rules="<?php echo esc_attr( wp_json_encode( $rules ) ); ?>" data-default="<?php echo esc_attr( wp_json_encode( $default ) ); ?>">
-			<input type="checkbox" class="vlt-overrides__toggle" hidden <?php checked( $overridden ); ?>>
-
-			<button type="button" class="vlt-overrides__summary" title="<?php esc_attr_e( 'Override for this page', '@@textdomain' ); ?>">
-				<span class="vlt-overrides__name"><?php echo esc_html( $label ); ?></span>
-				<span class="vlt-overrides__value"><?php echo wp_kses_post( $shown ); ?></span>
-				<span class="vlt-overrides__edit dashicons dashicons-edit" aria-hidden="true"></span>
-			</button>
-
+		<div class="vlt-overrides__field<?php echo $overridden ? ' is-overridden' : ''; ?>" data-setting="<?php echo esc_attr( $id ); ?>" data-type="<?php echo esc_attr( $type ); ?>" data-rules="<?php echo esc_attr( wp_json_encode( $rules ) ); ?>">
 			<div class="vlt-overrides__editor">
 				<div class="vlt-overrides__head">
 					<label class="vlt-overrides__label" for="<?php echo esc_attr( $input_id ); ?>"><?php echo esc_html( $label ); ?></label>
-					<button type="button" class="vlt-overrides__revert dashicons dashicons-image-rotate" title="<?php esc_attr_e( 'Use the Customizer value', '@@textdomain' ); ?>" aria-label="<?php esc_attr_e( 'Use the Customizer value', '@@textdomain' ); ?>"></button>
+					<button type="button" class="vlt-overrides__revert dashicons dashicons-image-rotate" title="<?php esc_attr_e( 'Inherit the Customizer value', '@@textdomain' ); ?>" aria-label="<?php esc_attr_e( 'Inherit the Customizer value', '@@textdomain' ); ?>"></button>
 				</div>
 
 				<div class="vlt-overrides__control">
-					<?php $this->render_control( $id, $field, $value, $input_id, !$overridden ); ?>
+					<?php $this->render_control( $id, $field, $overridden ? $overrides[ $id ] : null, $input_id, $inherited ); ?>
 				</div>
 
-				<div class="vlt-overrides__inherit">
-					<?php esc_html_e( 'Customizer:', '@@textdomain' ); ?>
-					<span><?php echo wp_kses_post( $shown ); ?></span>
-				</div>
+				<?php if ( !in_array( $type, [ 'select', 'radio', 'checkbox' ], true ) ) : ?>
+					<div class="vlt-overrides__inherit">
+						<?php esc_html_e( 'Empty: inherit', '@@textdomain' ); ?>
+						<span><?php echo wp_kses_post( $this->display_value( $field, $inherited ) ); ?></span>
+					</div>
+				<?php endif; ?>
 			</div>
 		</div>
 		<?php
 	}
 
 	/**
-	 * The control of a field type, named vlt_overrides[settings]
+	 * The control of a field type, named vlt_overrides[settings]; $value null: the field inherits
 	 */
-	private function render_control( $id, $field, $value, $input_id, $disabled ) {
-		$name     = 'vlt_overrides[' . $id . ']';
-		$type     = $field['type'] ?? 'text';
-		$choices  = is_array( $field['choices'] ?? null ) ? $field['choices'] : [];
-		$value    = is_scalar( $value ) ? (string) $value : '';
-		$attrs    = 'name="' . esc_attr( $name ) . '" class="vlt-overrides__input"' . disabled( $disabled, true, false );
+	private function render_control( $id, $field, $value, $input_id, $inherited ) {
+		$name    = 'vlt_overrides[' . $id . ']';
+		$type    = $field['type'] ?? 'text';
+		$choices = is_array( $field['choices'] ?? null ) ? $field['choices'] : [];
+		$attrs   = 'name="' . esc_attr( $name ) . '" class="vlt-overrides__input"';
+		/* translators: %s: the Customizer value */
+		$inherit = sprintf( esc_html__( 'Inherit (%s)', '@@textdomain' ), wp_strip_all_tags( $this->display_value( $field, $inherited ) ) );
+
+		if ( 'checkbox' === $type ) {
+			$type    = 'select';
+			$choices = [ '1' => esc_html__( 'On', '@@textdomain' ), '0' => esc_html__( 'Off', '@@textdomain' ) ];
+			$value   = null === $value ? null : ( rest_sanitize_boolean( $value ) ? '1' : '0' );
+		}
+
+		$value = is_scalar( $value ) ? (string) $value : '';
 
 		switch ( $type ) {
 			case 'select':
 				echo '<select id="' . esc_attr( $input_id ) . '" ' . $attrs . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo '<option value=""' . selected( $value, '', false ) . '>' . esc_html( $inherit ) . '</option>';
 
 				foreach ( $choices as $choice => $label ) {
-					echo '<option value="' . esc_attr( $choice ) . '"' . selected( $value, (string) $choice, false ) . '>' . esc_html( $label ) . '</option>';
+					if ( '' !== (string) $choice ) {
+						echo '<option value="' . esc_attr( $choice ) . '"' . selected( $value, (string) $choice, false ) . '>' . esc_html( $label ) . '</option>';
+					}
 				}
 
 				echo '</select>';
@@ -271,16 +276,13 @@ class Overrides {
 				break;
 
 			case 'radio':
+				echo '<label class="vlt-overrides__radio"><input type="radio" value="" ' . $attrs . checked( $value, '', false ) . '> ' . esc_html( $inherit ) . '</label>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+
 				foreach ( $choices as $choice => $label ) {
-					echo '<label class="vlt-overrides__radio"><input type="radio" value="' . esc_attr( $choice ) . '" ' . $attrs . checked( $value, (string) $choice, false ) . '> ' . esc_html( $label ) . '</label>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					if ( '' !== (string) $choice ) {
+						echo '<label class="vlt-overrides__radio"><input type="radio" value="' . esc_attr( $choice ) . '" ' . $attrs . checked( $value, (string) $choice, false ) . '> ' . esc_html( $label ) . '</label>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					}
 				}
-
-				break;
-
-			case 'checkbox':
-				// Off is sent too: the hidden '' before the box
-				echo '<input type="hidden" value="" ' . $attrs . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-				echo '<label class="vlt-overrides__checkbox"><input type="checkbox" id="' . esc_attr( $input_id ) . '" value="1" ' . $attrs . checked( rest_sanitize_boolean( $value ), true, false ) . '> ' . esc_html__( 'On', '@@textdomain' ) . '</label>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 
 				break;
 
@@ -303,7 +305,7 @@ class Overrides {
 					<input type="hidden" id="<?php echo esc_attr( $input_id ); ?>" value="<?php echo esc_attr( $value ); ?>" data-save-as="<?php echo esc_attr( 'id' === ( $field['save_as'] ?? '' ) ? 'id' : 'url' ); ?>" <?php echo $attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 					<span class="vlt-overrides__image-preview"><?php echo $url ? '<img src="' . esc_url( $url ) . '" alt="">' : ''; ?></span>
 					<button type="button" class="button vlt-overrides__image-select"><?php esc_html_e( 'Select Image', '@@textdomain' ); ?></button>
-					<button type="button" class="button-link vlt-overrides__image-remove"><?php esc_html_e( 'Remove', '@@textdomain' ); ?></button>
+					<button type="button" class="button-link vlt-overrides__image-remove"><?php esc_html_e( 'Inherit', '@@textdomain' ); ?></button>
 				</div>
 				<?php
 				break;
@@ -355,7 +357,7 @@ class Overrides {
 	}
 
 	/**
-	 * Save the fields switched to Override, each sanitized as in the Customizer; the others inherit
+	 * Save the fields with a value, each sanitized as in the Customizer; the empty ones inherit
 	 */
 	public function save( $post_id ) {
 		if ( !isset( $_POST[ self::NONCE ] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ self::NONCE ] ) ), self::NONCE ) ) {
@@ -370,7 +372,7 @@ class Overrides {
 		$overrides = [];
 
 		foreach ( Customizer::get_overridable_fields() as $id => $field ) {
-			if ( !array_key_exists( $id, $posted ) || !is_scalar( $posted[ $id ] ) ) {
+			if ( !array_key_exists( $id, $posted ) || !is_scalar( $posted[ $id ] ) || '' === (string) $posted[ $id ] ) {
 				continue;
 			}
 

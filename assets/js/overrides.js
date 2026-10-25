@@ -1,7 +1,6 @@
 /* ========================================
- * Page Settings box (Modules/Core/Overrides.php): a field inherits the Customizer value (one line; a click
- * overrides it) or gives the page its own (its control; Revert inherits again); a field whose active_callback
- * fails on the page's values is hidden
+ * Page Settings box (Modules/Core/Overrides.php): a field inherits the Customizer value (Inherit, the empty value)
+ * or gives the page its own (any other value); a field whose active_callback fails on the page's values is hidden
  * ======================================== */
 (function ($) {
 	'use strict';
@@ -52,7 +51,7 @@
 			} catch (error) {}
 		});
 
-		// Colors: the picker as wide as the sidebar
+		// Colors: the picker as wide as the sidebar; Clear inherits
 		$box.find('input[data-color]').each(function () {
 			$(this).wpColorPicker({
 				// The editor's width: the box less its side padding (16px)
@@ -66,7 +65,7 @@
 			});
 		});
 
-		// Images: the attachment ID or its URL, as the field saves it
+		// Images: the attachment ID or its URL, as the field saves it; Inherit empties it
 		$box.on('click', '.vlt-overrides__image-select', function () {
 			var $image = $(this).closest('.vlt-overrides__image');
 			var $input = $image.find('.vlt-overrides__input');
@@ -90,60 +89,61 @@
 			$image.find('.vlt-overrides__image-preview').empty();
 		});
 
-		// Overridden: the control is sent; inheriting: disabled, so it is not
-		function setOverride($field, on) {
-			$field.toggleClass('is-overridden', on);
-			$field.find('.vlt-overrides__toggle').prop('checked', on);
-			$field.find('.vlt-overrides__input').prop('disabled', !on);
-			$field.find('.vlt-overrides__image button, .wp-color-result, .wp-picker-clear').prop('disabled', !on);
+		// A field's control value: '' while it inherits
+		function controlValue($field) {
+			if ('radio' === $field.data('type')) {
+				return $field.find('.vlt-overrides__input:checked').val() || '';
+			}
+
+			return $field.find('.vlt-overrides__input').val() || '';
 		}
 
-		$fields.each(function () {
-			setOverride($(this), $(this).hasClass('is-overridden'));
-		});
+		// Inherit: the empty value in every control
+		function inherit($field) {
+			var $input = $field.find('.vlt-overrides__input');
 
-		$box.on('click', '.vlt-overrides__summary', function () {
-			var $field = $(this).closest('.vlt-overrides__field');
-
-			setOverride($field, true);
-			update();
-
-			// A color: its swatch button, the picker opens on a click (focusing its input would open it)
-			$field.find('.wp-color-result, .vlt-overrides__input:visible, .vlt-overrides__image-select').first().trigger('focus');
-		});
+			switch ($field.data('type')) {
+				case 'radio':
+					$input.filter('[value=""]').prop('checked', true);
+					break;
+				case 'color':
+					$field.find('.wp-picker-clear').trigger('click');
+					break;
+				case 'image':
+					$field.find('.vlt-overrides__image-remove').trigger('click');
+					break;
+				default:
+					$input.val('');
+			}
+		}
 
 		$box.on('click', '.vlt-overrides__revert', function () {
 			var $field = $(this).closest('.vlt-overrides__field');
 
-			setOverride($field, false);
+			inherit($field);
 			update();
-			$field.find('.vlt-overrides__summary').trigger('focus');
+			$field.find('.vlt-overrides__input').first().trigger('focus');
 		});
 
 		$box.on('click', '.vlt-overrides__reset', function () {
 			$fields.each(function () {
-				setOverride($(this), false);
+				inherit($(this));
 			});
 
 			update();
 		});
 
-		// The value a field has on this page: its control while overridden, else the Customizer's
+		// The value a field has on this page: its own, else the Customizer's
 		function pageValue(setting) {
 			var $field = $fields.filter('[data-setting="' + setting + '"]');
+			var value = $field.length ? controlValue($field) : '';
 
-			if (!$field.length || !$field.hasClass('is-overridden')) {
+			if ('' === value) {
 				return undefined !== inherited[setting] ? inherited[setting] : null;
 			}
 
-			switch ($field.data('type')) {
-				case 'checkbox':
-					return $field.find('input[type="checkbox"].vlt-overrides__input').is(':checked');
-				case 'radio':
-					return $field.find('.vlt-overrides__input:checked').val();
-				default:
-					return $field.find('.vlt-overrides__input').last().val();
-			}
+			// A checkbox is a select: On is '1', Off is '0'
+			return 'checkbox' === $field.data('type') ? '1' === value : value;
 		}
 
 		// Customizer::rules_match() on the page's values
@@ -171,37 +171,15 @@
 			});
 		}
 
-		// A field's default: data-default is JSON (jQuery's data() keeps a JSON string's quotes)
-		function fieldDefault(field) {
-			try {
-				return JSON.parse(field.getAttribute('data-default'));
-			} catch (error) {
-				return '';
-			}
-		}
-
-		// Same value: '18' is 18, an unset value is '' (customizer-controls.js sameValue())
-		function sameValue(a, b) {
-			var normalize = function (value) {
-				if (null === value || undefined === value || false === value) {
-					return '';
-				}
-
-				return true === value ? '1' : String(value);
-			};
-
-			return normalize(a) === normalize(b);
-		}
-
-		// The fields shown, their dot (the page's value is not the default), and the overrides counted in the
-		// footer and on each panel's title
+		// The fields shown, the ones overridden (a value of their own), and the overrides counted in the footer and on
+		// each panel's title
 		function update() {
 			$fields.each(function () {
 				var $field = $(this);
 				var rules = $field.data('rules') || [];
 
 				this.hidden = rules.length > 0 && !rulesMatch(rules);
-				$field.toggleClass('is-changed', !sameValue(pageValue($field.data('setting')), fieldDefault(this)));
+				$field.toggleClass('is-overridden', '' !== controlValue($field));
 			});
 
 			var overridden = $fields.filter('.is-overridden').length;

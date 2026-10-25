@@ -314,7 +314,7 @@ if ( !function_exists( 'vlt_fw_has_menu' ) ) {
  *
  * Wrapper for Menus::get_nav_breakpoint() static method
  *
- * @return string Breakpoint size identifier (xs, sm, md, lg, xl), default: 'xl'
+ * @return string Breakpoint size identifier (sm, md, lg), default: 'lg'
  */
 if ( !function_exists( 'vlt_fw_nav_breakpoint' ) ) {
 	function vlt_fw_nav_breakpoint() {
@@ -322,7 +322,7 @@ if ( !function_exists( 'vlt_fw_nav_breakpoint' ) ) {
 			return VLT\Framework\Modules\Core\Menus::get_nav_breakpoint();
 		}
 
-		return 'xl';
+		return 'lg';
 	}
 }
 

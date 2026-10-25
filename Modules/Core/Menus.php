@@ -92,13 +92,13 @@ class Menus extends BaseModule {
 	 * Get navigation breakpoint for responsive menu
 	 */
 	public static function get_nav_breakpoint() {
-		$breakpoint = apply_filters( 'vlt_fw_nav_breakpoint', 'xl' );
+		$breakpoint = apply_filters( 'vlt_fw_nav_breakpoint', 'lg' );
 
 		// Validate breakpoint
-		$valid_breakpoints = [ 'xs', 'sm', 'md', 'lg', 'xl' ];
+		$valid_breakpoints = [ 'sm', 'md', 'lg' ];
 
 		if ( !in_array( $breakpoint, $valid_breakpoints, true ) ) {
-			$breakpoint = 'xl';
+			$breakpoint = 'lg';
 		}
 
 		return $breakpoint;
