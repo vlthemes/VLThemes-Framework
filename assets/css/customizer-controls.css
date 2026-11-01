@@ -85,15 +85,15 @@
 }
 
 .vlt-value__box {
-	box-sizing: border-box;
 	display: flex;
 	align-items: stretch;
 	height: 40px;
-	overflow: hidden;
+	box-sizing: border-box;
 	background: var(--vlt-surface);
 	border: 1px solid var(--vlt-border);
 	border-radius: var(--vlt-radius);
 	transition: border-color .15s, box-shadow .15s;
+	overflow: hidden;
 }
 
 .vlt-value__box:hover {
@@ -164,16 +164,16 @@
 /* Unit menu: in the body, placed on the unit button by the script */
 .vlt-value__menu {
 	position: fixed;
-	z-index: 500001;
-	box-sizing: border-box;
 	min-width: 140px;
 	max-height: 260px;
+	box-sizing: border-box;
 	padding: 6px 0;
-	overflow-y: auto;
 	background: var(--vlt-surface);
 	border: 1px solid var(--vlt-divider);
 	border-radius: var(--vlt-radius);
 	box-shadow: 0 4px 16px color-mix(in oklab, #000000 12%, transparent);
+	overflow-y: auto;
+	z-index: 500001;
 }
 
 .vlt-value__menu[hidden] {
@@ -268,8 +268,8 @@
 	flex: 1;
 	height: 10px;
 	margin: 0 4px;
-	cursor: ew-resize;
 	touch-action: none;
+	cursor: ew-resize;
 	background-image: linear-gradient(to right, #cccccc 2px, transparent 2px);
 	background-size: 5px 100%;
 	-webkit-mask-image: linear-gradient(to right, transparent, #000000 20%, #000000 80%, transparent);

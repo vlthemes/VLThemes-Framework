@@ -101,7 +101,8 @@ class Assets extends BaseModule {
 	 * Add resource hints for Google Fonts
 	 */
 	public function resource_hints( $hints, $relation_type ) {
-		if ( 'preconnect' === $relation_type ) {
+		// Only when there are Google fonts to load (a theme may serve its own)
+		if ( 'preconnect' === $relation_type && $this->get_google_fonts_url() ) {
 			$hints[] = [ 'href' => 'https://fonts.googleapis.com' ];
 			$hints[] = [
 				'href'        => 'https://fonts.gstatic.com',
