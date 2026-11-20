@@ -445,3 +445,161 @@
 	font-size: 11px;
 	color: var(--vlt-muted);
 }
+
+/* ========================================
+ * Color palette and global colors (Controls/ColorPaletteControl.php, Controls/GlobalColorControl.php)
+ * ======================================== */
+
+/* Swatches in a row; an open picker takes a row of its own under them */
+.vlt-palette__colors,
+.vlt-global-color {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	align-items: center;
+}
+
+.vlt-palette__colors .wp-picker-container,
+.vlt-global-color .wp-picker-container {
+	display: contents;
+}
+
+.vlt-palette__colors .wp-picker-input-wrap,
+.vlt-palette__colors .wp-picker-holder,
+.vlt-global-color .wp-picker-input-wrap,
+.vlt-global-color .wp-picker-holder {
+	flex-basis: 100%;
+	order: 1;
+}
+
+.vlt-palette__colors .wp-picker-input-wrap.hidden,
+.vlt-global-color .wp-picker-input-wrap.hidden {
+	display: none;
+}
+
+.vlt-palette__colors .wp-picker-container:not(.wp-picker-active) .wp-picker-holder,
+.vlt-global-color .wp-picker-container:not(.wp-picker-active) .wp-picker-holder {
+	display: none;
+}
+
+/* A swatch: the picker's button as a circle; the swatches share one row, up to 28px each */
+.vlt-palette__colors .wp-color-result.button,
+.vlt-global-color .wp-color-result.button,
+.vlt-global-color__swatch {
+	position: relative;
+	flex: 1 1 0;
+	width: auto;
+	min-width: 0;
+	max-width: 28px;
+	height: auto;
+	min-height: 0;
+	aspect-ratio: 1;
+	padding: 0;
+	margin: 0;
+	overflow: hidden;
+	cursor: pointer;
+	border: 1px solid color-mix(in oklab, #000000 15%, transparent);
+	border-radius: 50%;
+	box-shadow: none;
+}
+
+.vlt-palette__colors .wp-color-result-text,
+.vlt-global-color .wp-color-result-text {
+	display: none;
+}
+
+.vlt-palette__colors .wp-color-result .color-alpha,
+.vlt-global-color .wp-color-result .color-alpha {
+	width: 100% !important;
+	border-radius: 0 !important;
+}
+
+.vlt-palette__colors .wp-color-result:focus-visible,
+.vlt-global-color .wp-color-result:focus-visible,
+.vlt-global-color__swatch:focus-visible {
+	outline: 2px solid var(--vlt-accent);
+	outline-offset: 2px;
+	box-shadow: none;
+}
+
+/* The color being edited, the global color's pick */
+.vlt-palette__colors .wp-picker-active .wp-color-result,
+.vlt-global-color__swatch[aria-pressed="true"],
+.vlt-global-color .wp-picker-container.is-active .wp-color-result {
+	box-shadow: 0 0 0 2px var(--vlt-surface), 0 0 0 4px var(--vlt-accent);
+}
+
+/* Custom color of a global color: a color wheel until one is picked */
+.vlt-global-color .wp-picker-container:not(.is-active) .wp-color-result {
+	background: conic-gradient(#ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000) !important;
+}
+
+.vlt-global-color .wp-picker-container:not(.is-active) .color-alpha {
+	display: none;
+}
+
+/* Separates the custom color from the palette */
+.vlt-global-color .wp-picker-container .wp-color-result {
+	margin-left: 4px;
+}
+
+/* Palettes: each a row of its colors and its name */
+.vlt-palette__presets-title {
+	display: block;
+	margin: 14px 0 6px;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--vlt-muted);
+}
+
+.vlt-palette__presets {
+	display: grid;
+	gap: 6px;
+}
+
+.vlt-palette__preset {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	width: 100%;
+	padding: 6px 8px;
+	font-family: inherit;
+	font-size: 12px;
+	color: var(--vlt-text);
+	text-align: left;
+	cursor: pointer;
+	background: var(--vlt-surface);
+	border: 1px solid var(--vlt-divider);
+	border-radius: var(--vlt-radius);
+	transition: border-color .15s;
+}
+
+.vlt-palette__preset:hover {
+	border-color: var(--vlt-border);
+}
+
+.vlt-palette__preset:focus-visible {
+	outline: none;
+	border-color: var(--vlt-accent);
+	box-shadow: 0 0 0 1px var(--vlt-accent);
+}
+
+.vlt-palette__preset[aria-pressed="true"] {
+	border-color: var(--vlt-accent);
+}
+
+.vlt-palette__preset-colors {
+	display: flex;
+	flex-shrink: 0;
+}
+
+.vlt-palette__preset-colors span {
+	width: 14px;
+	height: 14px;
+	border: 1px solid color-mix(in oklab, #000000 15%, transparent);
+	border-radius: 50%;
+}
+
+.vlt-palette__preset-colors span + span {
+	margin-left: -4px;
+}

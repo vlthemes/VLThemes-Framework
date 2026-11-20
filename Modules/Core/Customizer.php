@@ -7,6 +7,8 @@ use VLT\Framework\Modules\Core\Controls\TypographyControl;
 use VLT\Framework\Modules\Core\Controls\DividerControl;
 use VLT\Framework\Modules\Core\Controls\NoticeControl;
 use VLT\Framework\Modules\Core\Controls\AlphaColorControl;
+use VLT\Framework\Modules\Core\Controls\ColorPaletteControl;
+use VLT\Framework\Modules\Core\Controls\GlobalColorControl;
 use VLT\Framework\Modules\Core\Controls\RepeaterControl;
 use VLT\Framework\Modules\Core\Controls\ValueControl;
 
@@ -53,6 +55,38 @@ if ( !defined( 'ABSPATH' ) ) {
  *   - context: [ 'front' ] (the default), 'editor' for the block editor too.
  *   Printed in wp_head (and the block editor), live in the Customizer preview. Fields hidden by their
  *   active_callback print none.
+ *
+ * Colors (Blocksy's way: a palette, and global colors that take a palette color or a custom one):
+ *
+ *     Customizer::add_field( [
+ *         'type'     => 'color-palette',
+ *         'settings' => 'color_palette',
+ *         'section'  => 'colors',
+ *         'label'    => esc_html__( 'Color Palette', '@@textdomain' ),
+ *         'default'  => [ '#2563eb', '#1d4ed8', '#18181b', '#ffffff' ],
+ *         'names'    => [ esc_html__( 'Accent', '@@textdomain' ), … ],
+ *         'presets'  => [ 'ocean' => [ 'label' => esc_html__( 'Ocean', '@@textdomain' ), 'colors' => [ '#0284c7', … ] ] ],
+ *         'editor'   => true,
+ *     ] );
+ *
+ *     Customizer::add_field( [
+ *         'type'     => 'global-color',
+ *         'settings' => 'color_text',
+ *         'section'  => 'colors',
+ *         'label'    => esc_html__( 'Text', '@@textdomain' ),
+ *         'default'  => 'palette-3',
+ *         'variable' => '--vlt-text-color',
+ *     ] );
+ *
+ * - color-palette: colors, {"color1":"#…",…}, printed as --vlt-palette-1 … --vlt-palette-N on 'selector' (':root'
+ *   by default) in the front end and the block editor. 'count' is the number of colors (the number of defaults,
+ *   else 8), 'names' their names, 'presets' the palettes that fill them all at once. 'editor' => true: the colors
+ *   are the block editor's color palette too (one palette field). A dark palette is a second field with the
+ *   selector of the theme's dark mode ('selector' => '.night-mode'), added after the first one: it sets the
+ *   same variables there.
+ * - global-color: 'palette-N' (a color of the palette, it follows the dark palette) or a custom color (the same in
+ *   both modes), printed as the custom property 'variable' on ':root' and the selector of each palette field.
+ *   'palette' is the settings of its palette field (the first one by default); add it after that field.
  *
  * A field whose value is not the default shows a dot by its label and, on hover, a reset button.
  *
@@ -112,6 +146,13 @@ class Customizer extends BaseModule {
 	private static $outputs = [];
 
 	/**
+	 * Color palette fields, in their order [ settings => field ]
+	 *
+	 * @var array
+	 */
+	private static $palettes = [];
+
+	/**
 	 * Register module
 	 */
 	public function register() {
@@ -120,6 +161,7 @@ class Customizer extends BaseModule {
 		add_action( 'init', [ $this, 'load_theme_customizer' ], 5 );
 		add_action( 'init', [ $this, 'register_customizer_elements' ], 6 );
 		add_action( 'init', [ $this, 'load_dynamic_css_config' ], 7 );
+		add_action( 'init', [ $this, 'register_editor_palette' ], 8 );
 
 		add_action( 'customize_register', [ $this, 'apply_queue' ], 30 );
 
@@ -506,6 +548,7 @@ class Customizer extends BaseModule {
 
 		$saved  = 'typography' === ( $field['type'] ?? '' ) ? self::typography_saved( $field ) : self::get_option( $field['settings'] );
 		$blocks = [];
+		$last   = null;
 
 		foreach ( $field['output'] as $rule ) {
 			if ( !in_array( $context, $rule['context'], true ) ) {
@@ -518,6 +561,7 @@ class Customizer extends BaseModule {
 
 				if ( '' !== $css ) {
 					$blocks[ $rule['media_query'] ] = ( $blocks[ $rule['media_query'] ] ?? '' ) . $rule['element'] . '{' . $css . '}';
+					$last                           = [ $rule['media_query'], $rule['element'] ];
 				}
 
 				continue;
@@ -529,7 +573,17 @@ class Customizer extends BaseModule {
 				continue;
 			}
 
-			$blocks[ $rule['media_query'] ] = ( $blocks[ $rule['media_query'] ] ?? '' ) . $rule['element'] . '{' . $rule['property'] . ':' . str_replace( '$', $value, $rule['value_pattern'] ) . ';}';
+			$css         = $blocks[ $rule['media_query'] ] ?? '';
+			$declaration = $rule['property'] . ':' . str_replace( '$', $value, $rule['value_pattern'] ) . ';';
+
+			// The rule before has the same selector: one rule for both (a palette's colors)
+			if ( $last === [ $rule['media_query'], $rule['element'] ] ) {
+				$blocks[ $rule['media_query'] ] = substr( $css, 0, -1 ) . $declaration . '}';
+			} else {
+				$blocks[ $rule['media_query'] ] = $css . $rule['element'] . '{' . $declaration . '}';
+			}
+
+			$last = [ $rule['media_query'], $rule['element'] ];
 		}
 
 		return $blocks;
@@ -591,6 +645,9 @@ class Customizer extends BaseModule {
 
 			case 'checkbox':
 				return rest_sanitize_boolean( $value ) ? '1' : '';
+
+			case 'global-color':
+				return self::global_color_value( $value, $field['count'] ?? 0 );
 
 			case 'typography':
 				$font = json_decode( $value, true );
@@ -837,6 +894,190 @@ class Customizer extends BaseModule {
 	}
 
 	/**
+	 * A color-palette field ready to queue: count, names, presets and default as the control writes them, an
+	 * output rule per color (--vlt-palette-N on its selector, front end and block editor)
+	 *
+	 * @param array $args Field args
+	 *
+	 * @return array
+	 */
+	private static function palette_field( $args ) {
+		$colors = self::palette_colors( $args['default'] ?? [] );
+		$count  = max( 1, (int) ( $args['count'] ?? ( count( $colors ) ?: 8 ) ) );
+
+		$args['count']    = $count;
+		$args['selector'] = trim( (string) ( $args['selector'] ?? ':root' ) ) ?: ':root';
+		$args['names']    = array_slice( array_values( array_map( 'strval', (array) ( $args['names'] ?? [] ) ) ), 0, $count );
+		$args['default']  = self::palette_json( $colors, $count );
+
+		// A palette: a label and a color for each of the field's colors
+		$presets = [];
+
+		foreach ( (array) ( $args['presets'] ?? [] ) as $id => $preset ) {
+			$preset_colors = array_values( self::palette_colors( $preset['colors'] ?? [] ) );
+
+			if ( count( $preset_colors ) < $count ) {
+				continue;
+			}
+
+			$presets[ sanitize_key( $id ) ] = [
+				'label'  => (string) ( $preset['label'] ?? $id ),
+				'colors' => array_slice( $preset_colors, 0, $count ),
+			];
+		}
+
+		$args['presets'] = $presets;
+		$args['output']  = [];
+
+		for ( $i = 1; $i <= $count; $i++ ) {
+			$args['output'][] = [
+				'element'  => $args['selector'],
+				'property' => '--vlt-palette-' . $i,
+				'choice'   => 'color' . $i,
+				'context'  => [ 'front', 'editor' ],
+			];
+		}
+
+		self::$palettes[ $args['settings'] ] = $args;
+
+		return $args;
+	}
+
+	/**
+	 * A global-color field ready to queue: its palette and an output rule for its variable on ':root' and the
+	 * selector of each palette field (a dark palette's colors are then the ones its palette-N takes there)
+	 *
+	 * @param array $args Field args
+	 *
+	 * @return array
+	 */
+	private static function global_color_field( $args ) {
+		$palette = self::$palettes[ $args['palette'] ?? '' ] ?? reset( self::$palettes );
+
+		$args['palette'] = $palette ? $palette['settings'] : '';
+		$args['count']   = $palette ? $palette['count'] : 0;
+		$args['names']   = $palette ? $palette['names'] : [];
+
+		$variable = (string) ( $args['variable'] ?? '' );
+
+		if ( '' !== $variable ) {
+			$selectors = array_unique( array_merge( [ ':root' ], array_column( self::$palettes, 'selector' ) ) );
+
+			$args['output'] = array_merge(
+				[
+					[
+						'element'  => implode( ', ', $selectors ),
+						'property' => $variable,
+						'context'  => [ 'front', 'editor' ],
+					],
+				],
+				(array) ( $args['output'] ?? [] )
+			);
+		}
+
+		return $args;
+	}
+
+	/**
+	 * Colors of a palette value (a list, {"color1":…} or its JSON), keyed by their position from 0
+	 *
+	 * @param mixed $value Raw
+	 *
+	 * @return array
+	 */
+	private static function palette_colors( $value ) {
+		$data = is_array( $value ) ? $value : json_decode( (string) $value, true );
+
+		if ( !is_array( $data ) ) {
+			return [];
+		}
+
+		$colors = [];
+
+		foreach ( array_values( $data ) as $index => $color ) {
+			$colors[ $index ] = is_scalar( $color ) ? self::alpha_color( $color ) : '';
+		}
+
+		return $colors;
+	}
+
+	/**
+	 * A palette value as the control writes it: {"color1":…,"colorN":…}
+	 *
+	 * @param array $colors Colors keyed by their position from 0
+	 * @param int   $count  Number of colors
+	 *
+	 * @return string
+	 */
+	private static function palette_json( $colors, $count ) {
+		$value = [];
+
+		for ( $i = 1; $i <= $count; $i++ ) {
+			$value[ 'color' . $i ] = $colors[ $i - 1 ] ?? '';
+		}
+
+		return wp_json_encode( $value );
+	}
+
+	/**
+	 * Colors of a palette field: [ 'palette-1' => [ 'name', 'color', 'variable' ], … ]
+	 *
+	 * @param string $settings The palette field ('' for the first one)
+	 *
+	 * @return array [] while there is no such field
+	 */
+	public static function get_palette( $settings = '' ) {
+		$field = '' === $settings ? reset( self::$palettes ) : ( self::$palettes[ $settings ] ?? null );
+
+		if ( !$field ) {
+			return [];
+		}
+
+		$saved   = json_decode( (string) self::get_option( $field['settings'] ), true );
+		$default = json_decode( $field['default'], true );
+		$colors  = [];
+
+		for ( $i = 1; $i <= $field['count']; $i++ ) {
+			$color = self::alpha_color( $saved[ 'color' . $i ] ?? '' ) ?: $default[ 'color' . $i ];
+
+			// translators: %d: number of the palette color
+			$colors[ 'palette-' . $i ] = [
+				'name'     => $field['names'][ $i - 1 ] ?? sprintf( __( 'Color %d', '@@textdomain' ), $i ),
+				'color'    => $color,
+				'variable' => '--vlt-palette-' . $i,
+			];
+		}
+
+		return $colors;
+	}
+
+	/**
+	 * Block editor: the colors of the palette field with 'editor' => true are its color palette, as their
+	 * variables (so they follow the Customizer), the saved color as the fallback
+	 */
+	public function register_editor_palette() {
+		foreach ( self::$palettes as $field ) {
+			if ( empty( $field['editor'] ) ) {
+				continue;
+			}
+
+			$palette = [];
+
+			foreach ( self::get_palette( $field['settings'] ) as $slug => $color ) {
+				$palette[] = [
+					'name'  => $color['name'],
+					'slug'  => $slug,
+					'color' => 'var(' . $color['variable'] . ', ' . $color['color'] . ')',
+				];
+			}
+
+			add_theme_support( 'editor-color-palette', $palette );
+
+			return;
+		}
+	}
+
+	/**
 	 * Queue a panel
 	 */
 	public static function add_panel( $id, $args ) {
@@ -869,6 +1110,15 @@ class Customizer extends BaseModule {
 		// A typography default as the control writes its value, so the changed dot compares like with like
 		if ( 'typography' === ( $args['type'] ?? '' ) && isset( $args['default'] ) ) {
 			$args['default'] = self::typography_default( $args['default'] );
+		}
+
+		// Colors: their default, count and output rules (the CSS variables)
+		if ( 'color-palette' === ( $args['type'] ?? '' ) ) {
+			$args = self::palette_field( $args );
+		}
+
+		if ( 'global-color' === ( $args['type'] ?? '' ) ) {
+			$args = self::global_color_field( $args );
 		}
 
 		if ( isset( $args['output'] ) ) {
@@ -1185,6 +1435,12 @@ class Customizer extends BaseModule {
 
 				return new \WP_Customize_Color_Control( $wp_customize, $id, $control_args );
 
+			case 'color-palette':
+				return new ColorPaletteControl( $wp_customize, $id, $control_args + [ 'count' => $args['count'], 'names' => $args['names'], 'presets' => $args['presets'] ] );
+
+			case 'global-color':
+				return new GlobalColorControl( $wp_customize, $id, $control_args + [ 'palette' => $args['palette'], 'count' => $args['count'], 'names' => $args['names'] ] );
+
 			case 'image':
 				// 'save_as' => 'id': the attachment ID, else the URL
 				if ( 'id' === ( $args['save_as'] ?? '' ) ) {
@@ -1296,6 +1552,16 @@ class Customizer extends BaseModule {
 			case 'typography':
 				return [ $this, 'sanitize_typography' ];
 
+			case 'color-palette':
+				return function ( $value ) use ( $args ) {
+					return $this->sanitize_palette( $value, $args );
+				};
+
+			case 'global-color':
+				return function ( $value ) use ( $args ) {
+					return self::global_color( $value, $args['count'] ?? 0 );
+				};
+
 			case 'repeater':
 				$fields = $args['fields'] ?? [];
 
@@ -1325,6 +1591,17 @@ class Customizer extends BaseModule {
 	 * (rgba(...), hsla(...), or plain hex — as produced by AlphaColorControl)
 	 */
 	public function sanitize_alpha_color( $value ) {
+		return self::alpha_color( $value );
+	}
+
+	/**
+	 * A color as AlphaColorControl writes it: hex, rgb(a) or hsl(a); '' otherwise
+	 *
+	 * @param mixed $value Raw
+	 *
+	 * @return string
+	 */
+	private static function alpha_color( $value ) {
 		$value = trim( (string) $value );
 
 		if ( '' === $value ) {
@@ -1344,6 +1621,58 @@ class Customizer extends BaseModule {
 		}
 
 		return '';
+	}
+
+	/**
+	 * Sanitize a color-palette value: a color for each of the field's colors, the default one for an invalid color
+	 *
+	 * @param mixed $value Raw (JSON)
+	 * @param array $args  Queued field
+	 *
+	 * @return string
+	 */
+	public function sanitize_palette( $value, $args ) {
+		$data    = json_decode( (string) $value, true );
+		$default = json_decode( $args['default'], true );
+		$colors  = [];
+
+		for ( $i = 1; $i <= $args['count']; $i++ ) {
+			$colors[] = self::alpha_color( $data[ 'color' . $i ] ?? '' ) ?: $default[ 'color' . $i ];
+		}
+
+		return self::palette_json( $colors, $args['count'] );
+	}
+
+	/**
+	 * A global-color value: 'palette-N' of the palette's colors, or a color
+	 *
+	 * @param mixed $value Raw
+	 * @param int   $count Number of palette colors
+	 *
+	 * @return string
+	 */
+	private static function global_color( $value, $count ) {
+		$value = trim( (string) $value );
+
+		if ( preg_match( '/^palette-(\d+)$/', $value, $match ) ) {
+			return ( (int) $match[1] >= 1 && (int) $match[1] <= $count ) ? $value : '';
+		}
+
+		return self::alpha_color( $value );
+	}
+
+	/**
+	 * A global-color value as CSS: var(--vlt-palette-N) or the color
+	 *
+	 * @param mixed $value Saved
+	 * @param int   $count Number of palette colors
+	 *
+	 * @return string
+	 */
+	private static function global_color_value( $value, $count ) {
+		$value = self::global_color( $value, $count );
+
+		return str_starts_with( $value, 'palette-' ) ? 'var(--vlt-' . $value . ')' : $value;
 	}
 
 	/**

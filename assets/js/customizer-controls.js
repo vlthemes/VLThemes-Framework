@@ -1,6 +1,6 @@
 /* ========================================
- * Customizer controls (Vanilla JS): changed dot and reset, value field, typography, alpha color, repeater,
- * panel and section icons
+ * Customizer controls (Vanilla JS): changed dot and reset, value field, typography, alpha color, color palette,
+ * global color, repeater, panel and section icons
  * ======================================== */
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
@@ -563,35 +563,236 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 
 		wp.customize.control.each(function (control) {
-			if (control.params.type !== 'vlt-color-alpha') {
+			var types = {
+				'vlt-color-alpha': initAlphaColorControl,
+				'vlt-color-palette': initPaletteControl,
+				'vlt-global-color': initGlobalColorControl
+			};
+
+			if (!types[control.params.type]) {
 				return;
 			}
 
 			control.deferred.embedded.done(function () {
-				var input = jQuery(control.container.find('.vlt-color-picker-alpha'));
-
-				if (!input.length || input.data('wpWpColorPicker')) {
-					return;
-				}
-
-				input.wpColorPicker({
-					change: function () {
-						setTimeout(function () {
-							input.trigger('change');
-						}, 1);
-					}
-				});
-
-				// Re-render the picker's own UI (swatch, alpha slider) when
-				// the setting changes programmatically (e.g. reset button).
-				control.setting.bind(function (newValue) {
-					if (input.val() !== newValue) {
-						input.val(newValue);
-					}
-					input.wpColorPicker('color', newValue);
-				});
+				types[control.params.type](control);
 			});
 		});
+	}
+
+	// The alpha color picker on an input; onChange gets the color as it is picked (also with the Default button)
+	function colorPicker(input, onChange) {
+		var $input = jQuery(input);
+
+		if ($input.data('wpWpColorPicker')) {
+			return $input;
+		}
+
+		var changed = function () {
+			setTimeout(function () {
+				onChange($input.val());
+			}, 1);
+		};
+
+		$input.wpColorPicker({ change: changed, clear: changed });
+		$input.on('change', changed);
+
+		// The swatch button is named after the color it edits
+		var name = input.getAttribute('data-name');
+		var button = $input.closest('.wp-picker-container').find('.wp-color-result').get(0);
+
+		if (name && button) {
+			button.title = name;
+			button.setAttribute('aria-label', name);
+		}
+
+		return $input;
+	}
+
+	// A color field (Modules/Core/Controls/AlphaColorControl.php): the input is linked to the setting
+	function initAlphaColorControl(control) {
+		var input = jQuery(control.container.find('.vlt-color-picker-alpha'));
+
+		if (!input.length || input.data('wpWpColorPicker')) {
+			return;
+		}
+
+		input.wpColorPicker({
+			change: function () {
+				setTimeout(function () {
+					input.trigger('change');
+				}, 1);
+			}
+		});
+
+		// Re-render the picker's own UI (swatch, alpha slider) when
+		// the setting changes programmatically (e.g. reset button).
+		control.setting.bind(function (newValue) {
+			if (input.val() !== newValue) {
+				input.val(newValue);
+			}
+			input.wpColorPicker('color', newValue);
+		});
+	}
+
+	// A palette value ({"color1":…}) as an object
+	function paletteValue(value) {
+		try {
+			var data = JSON.parse(value || '{}');
+
+			return data && 'object' === typeof data ? data : {};
+		} catch (error) {
+			return {};
+		}
+	}
+
+	// Palette (Modules/Core/Controls/ColorPaletteControl.php): a picker per color, the palettes fill them all
+	function initPaletteControl(control) {
+		var root = control.container.find('.vlt-palette').get(0);
+
+		if (!root || root.dataset.ready) {
+			return;
+		}
+
+		root.dataset.ready = '1';
+
+		var inputs = Array.prototype.slice.call(root.querySelectorAll('.vlt-palette__input'));
+		var presets = Array.prototype.slice.call(root.querySelectorAll('.vlt-palette__preset'));
+
+		// The colors in their order, as Customizer::palette_json() writes them
+		var json = function (colors) {
+			var value = {};
+
+			inputs.forEach(function (input, index) {
+				value[input.getAttribute('data-key')] = colors[index] || '';
+			});
+
+			return JSON.stringify(value);
+		};
+
+		var write = function () {
+			var value = json(inputs.map(function (input) {
+				return input.value;
+			}));
+
+			if (value !== control.setting.get()) {
+				control.setting.set(value);
+			}
+		};
+
+		// The palette matching the colors is the pressed one
+		var markPreset = function (value) {
+			presets.forEach(function (preset) {
+				preset.setAttribute('aria-pressed', String(json(JSON.parse(preset.getAttribute('data-colors'))) === value));
+			});
+		};
+
+		var show = function (value) {
+			var data = paletteValue(value);
+
+			inputs.forEach(function (input) {
+				var color = data[input.getAttribute('data-key')] || '';
+
+				if (input.value !== color) {
+					jQuery(input).wpColorPicker('color', color);
+				}
+			});
+
+			markPreset(value);
+		};
+
+		inputs.forEach(function (input) {
+			colorPicker(input, write);
+		});
+
+		presets.forEach(function (preset) {
+			preset.addEventListener('click', function () {
+				control.setting.set(json(JSON.parse(preset.getAttribute('data-colors'))));
+			});
+		});
+
+		control.setting.bind(show);
+		markPreset(control.setting.get());
+	}
+
+	// Global color (Modules/Core/Controls/GlobalColorControl.php): a palette color (palette-N) or a custom one
+	function initGlobalColorControl(control) {
+		var root = control.container.find('.vlt-global-color').get(0);
+
+		if (!root || root.dataset.ready) {
+			return;
+		}
+
+		root.dataset.ready = '1';
+
+		var swatches = Array.prototype.slice.call(root.querySelectorAll('.vlt-global-color__swatch'));
+		var input = root.querySelector('.vlt-global-color__custom');
+		var palette = control.params.palette ? wp.customize(control.params.palette) : null;
+
+		// The color the script put in the custom picker: its change is not the user's
+		var shown = null;
+
+		var paletteColor = function (key) {
+			return palette ? paletteValue(palette.get())[key] || '' : '';
+		};
+
+		var paint = function () {
+			swatches.forEach(function (swatch) {
+				swatch.style.backgroundColor = paletteColor(swatch.getAttribute('data-key'));
+			});
+		};
+
+		var show = function (value) {
+			var isPalette = /^palette-\d+$/.test(value || '');
+			var custom = control.container.find('.wp-picker-container').get(0);
+			var color = value;
+
+			swatches.forEach(function (swatch) {
+				var pressed = swatch.getAttribute('data-value') === value;
+
+				swatch.setAttribute('aria-pressed', String(pressed));
+
+				if (pressed) {
+					color = paletteColor(swatch.getAttribute('data-key'));
+				}
+			});
+
+			if (custom) {
+				custom.classList.toggle('is-active', !isPalette && !!value);
+			}
+
+			// The custom picker starts from the color shown
+			if (input.value !== color) {
+				jQuery(input).wpColorPicker('color', color);
+			}
+
+			shown = input.value;
+		};
+
+		colorPicker(input, function (value) {
+			if (value === shown) {
+				return;
+			}
+
+			shown = value;
+			control.setting.set(value);
+		});
+
+		swatches.forEach(function (swatch) {
+			swatch.addEventListener('click', function () {
+				control.setting.set(swatch.getAttribute('data-value'));
+			});
+		});
+
+		if (palette) {
+			palette.bind(function () {
+				paint();
+				show(control.setting.get());
+			});
+		}
+
+		control.setting.bind(show);
+		paint();
+		show(control.setting.get());
 	}
 
 	/* ========================================

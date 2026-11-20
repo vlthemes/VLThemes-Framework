@@ -461,6 +461,26 @@ if ( !function_exists( 'vlt_fw_get_setting_choices' ) ) {
 }
 
 /**
+ * Get the colors of a color palette (a 'color-palette' Customizer field)
+ *
+ * Wrapper for Customizer::get_palette() static method
+ *
+ * @param string $settings The palette field's settings (default: the first palette field)
+ *
+ * @return array [ 'palette-1' => [ 'name' => …, 'color' => '#…', 'variable' => '--vlt-palette-1' ], … ], or [] while
+ *               the theme registers no palette
+ */
+if ( !function_exists( 'vlt_fw_get_palette' ) ) {
+	function vlt_fw_get_palette( $settings = '' ) {
+		if ( class_exists( '\VLT\Framework\Modules\Core\Customizer' ) ) {
+			return VLT\Framework\Modules\Core\Customizer::get_palette( $settings );
+		}
+
+		return [];
+	}
+}
+
+/**
  * Convert pixels to rem units
  *
  * Converts pixel values to rem units for better scalability and accessibility.

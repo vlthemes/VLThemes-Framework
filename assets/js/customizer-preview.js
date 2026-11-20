@@ -119,6 +119,10 @@
 			case 'checkbox':
 				return value && 'false' !== value && '0' !== value ? '1' : '';
 
+			// A palette color is its variable (Customizer::global_color_value())
+			case 'global-color':
+				return /^palette-\d+$/.test(value) ? 'var(--vlt-' + value + ')' : stripCss(value);
+
 			case 'typography':
 				try {
 					var font = JSON.parse(value);
@@ -242,6 +246,7 @@
 
 		var saved = settingValue(id);
 		var blocks = {};
+		var last = null;
 
 		// A typography value saved without a font takes the font of the field's default (Customizer::typography_saved())
 		if ('typography' === field.type && field.family) {
@@ -262,6 +267,7 @@
 
 				if (declarations) {
 					blocks[rule.media_query] = (blocks[rule.media_query] || '') + rule.element + '{' + declarations + '}';
+					last = rule.media_query + '{' + rule.element;
 				}
 
 				return;
@@ -273,7 +279,15 @@
 				return;
 			}
 
-			blocks[rule.media_query] = (blocks[rule.media_query] || '') + rule.element + '{' + rule.property + ':' + rule.value_pattern.split('$').join(value) + ';}';
+			var css = blocks[rule.media_query] || '';
+			var declaration = rule.property + ':' + rule.value_pattern.split('$').join(value) + ';';
+
+			// The rule before has the same selector: one rule for both (a palette's colors)
+			blocks[rule.media_query] = last === rule.media_query + '{' + rule.element
+				? css.slice(0, -1) + declaration + '}'
+				: css + rule.element + '{' + declaration + '}';
+
+			last = rule.media_query + '{' + rule.element;
 		});
 
 		// The plain rules first, then each media query

@@ -58,6 +58,74 @@ add_filter('vlt_fw_config', function($config) {
 });
 ```
 
+## Colors
+
+A theme can give the Customizer a color palette and global colors that pick from it, the way Blocksy does. Nothing
+changes for a theme that registers no `color-palette` field.
+
+Fields go in the theme's `inc/customizer/` like any other field:
+
+```php
+use VLT\Framework\Modules\Core\Customizer;
+
+// The palette: --vlt-palette-1 … --vlt-palette-4 on :root, front end and block editor
+Customizer::add_field( [
+    'type'     => 'color-palette',
+    'settings' => 'color_palette',
+    'section'  => 'section_colors',
+    'label'    => esc_html__( 'Color Palette', 'your-theme-textdomain' ),
+    'default'  => [ '#2563eb', '#18181b', '#e4e4e7', '#ffffff' ],
+    'names'    => [ 'Accent', 'Text', 'Border', 'Background' ],
+    'presets'  => [
+        'forest' => [ 'label' => 'Forest', 'colors' => [ '#15803d', '#18181b', '#e4e4e7', '#ffffff' ] ],
+    ],
+    'editor'   => true, // the block editor's color palette too
+] );
+
+// Optional: a dark palette, the same variables under the theme's dark mode selector (add it after the first one)
+Customizer::add_field( [
+    'type'     => 'color-palette',
+    'settings' => 'color_palette_dark',
+    'section'  => 'section_colors',
+    'label'    => esc_html__( 'Dark Mode Palette', 'your-theme-textdomain' ),
+    'default'  => [ '#60a5fa', '#fafafa', '#27272a', '#09090b' ],
+    'names'    => [ 'Accent', 'Text', 'Border', 'Background' ],
+    'selector' => '.night-mode',
+] );
+
+// A global color: a palette color ('palette-2') or a custom color, printed as the variable it names
+Customizer::add_field( [
+    'type'     => 'global-color',
+    'settings' => 'color_text',
+    'section'  => 'section_colors',
+    'label'    => esc_html__( 'Text', 'your-theme-textdomain' ),
+    'default'  => 'palette-2',
+    'palette'  => 'color_palette',
+    'variable' => '--vlt-text-color',
+] );
+```
+
+- **color-palette**: the value is JSON, `{"color1":"#…",…}`. Each color opens the alpha color picker; a palette from
+  `presets` fills them all at once. `count` is the number of colors (by default the number of `default` colors,
+  else 8), `names` names them in the Customizer and the block editor, `selector` is where the variables go
+  (`:root` by default). `'editor' => true` registers the colors with `add_theme_support( 'editor-color-palette' )`
+  as `var(--vlt-palette-N, #saved)`, slugs `palette-1` … `palette-N`, so blocks use the same colors. That replaces a
+  palette the theme sets in its `theme_support` config.
+- **Dark palette**: a second `color-palette` field with the selector of the theme's dark mode. It sets the same
+  `--vlt-palette-N` there, so everything that uses them follows the mode. A theme without a dark mode registers one
+  palette.
+- **global-color**: `palette-N` or a color. It prints `variable` as `var(--vlt-palette-N)` (or the color) on `:root`
+  and on the selector of each palette field, front end and block editor. A palette color follows the dark palette;
+  a custom color is the same in both modes. `palette` is the settings of its palette field (the first one by
+  default).
+- The theme maps its own tokens to these variables, with its colors as fallbacks, e.g.
+  `--text: var(--vlt-text-color, #18181b);`.
+- All of them preview live in the Customizer.
+
+`vlt_fw_get_palette( $settings = '' )` returns the colors of a palette field (the first one by default):
+`[ 'palette-1' => [ 'name' => 'Accent', 'color' => '#2563eb', 'variable' => '--vlt-palette-1' ], … ]`, or `[]` when
+the theme registers none.
+
 ## Module System
 
 The framework uses a modular architecture with the following module types:
@@ -118,6 +186,7 @@ The framework uses a modular architecture with the following module types:
 
 ### Customizer Functions
 - `vlt_fw_get_theme_mod()` - Get theme modification with fallback
+- `vlt_fw_get_palette()` - Get the colors of a color palette field
 
 ## Requirements
 
